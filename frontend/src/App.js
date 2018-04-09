@@ -1,7 +1,8 @@
 import React from 'react';
-import {withStyles} from 'material-ui/styles';
 import Button from 'material-ui/Button';
+import {withStyles} from 'material-ui/styles';
 import {CircularProgress} from 'material-ui/Progress';
+import Card from 'material-ui/Card';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import TextField from 'material-ui/TextField';
@@ -22,14 +23,18 @@ const styles = theme => ({
         marginRight: theme.spacing.unit,
         width: 200,
     },
-    progress: {
-        margin: theme.spacing.unit * 2,
+    card: {
+        maxWidth: 345,
     },
+    media: {
+        width: '100%',
+    },
+    wrap: {
+        margin: '0 auto',
+        width: 700
+    }
 });
 
-const pixelMix = (pA, pZ) => {
-    return parseInt((pA + pZ) / 2)
-}
 
 const frameMix = (fA, fZ, disposal, transparent_index) => {
     for (let i = 0; i < fA.length; i += 4) {
@@ -59,23 +64,38 @@ class Gif extends React.Component {
         }
     }
 
-    reStart = () => {
-        this.setState({
-            currentFrame: 0,
-            play: true
-        })
+    componentDidMount() {
+        // store intervalId in the state so it can be accessed later:
+        // var intervalId = setInterval(this.changeFrame, this.state.speed);
+        // this.setState({intervalId: intervalId});
     }
+
+    componentWillUnmount() {
+        // use intervalId from the state to clear the interval
+        if (this.state.intervalId) {
+            clearInterval(this.state.intervalId);
+        }
+    }
+
 
     moveToFrame = (num) => {
         const {context} = this.state
         const {gif, currentFrame, maxFrame, data} = this.state
-        context.putImageData(gif[num], 0, 0)
+        try {
+            context.putImageData(gif[num], 0, 0)
+        } catch (error) {
+            console.error(gif)
+            console.error(num)
+            console.error(error)
+        }
+
         this.setState({
             currentFrame: num
         })
     }
 
     handleFrameChange = (event) => {
+        clearInterval(this.state.intervalId);
         this.moveToFrame(event.target.value)
     }
     changeFrame = () => {
@@ -95,6 +115,11 @@ class Gif extends React.Component {
                 play: !this.state.play
             })
         }
+    }
+    showFirstFrame = () => {
+        const {context, gif, currentFrame, maxFrame} = this.state
+        context.putImageData(gif[0], 0, 0)
+
     }
 
     handleSpeedChange = (event) => {
@@ -157,91 +182,89 @@ class Gif extends React.Component {
                 context,
                 uploaded: false
             })
-            this.changeFrame()
+            this.showFirstFrame()
+            // this.changeFrame()
         }
         fr.readAsArrayBuffer(file)
     }
 
-    componentDidMount() {
-        // store intervalId in the state so it can be accessed later:
-        var intervalId = setInterval(this.changeFrame, this.state.speed);
-        this.setState({intervalId: intervalId});
-    }
-
-    componentWillUnmount() {
-        // use intervalId from the state to clear the interval
-        if (this.state.gif) {
-            clearInterval(this.state.intervalId);
-        }
-    }
-
     handleStop = () => {
-        const {play} = this.state
-        if (play) {
-            clearInterval(this.state.intervalId);
-        } else {
-            var intervalId = setInterval(this.changeFrame, this.state.speed);
-            this.setState({intervalId: intervalId});
-        }
-        this.setState({
-            play: !play
-        })
+        clearInterval(this.state.intervalId);
+        this.setState({play: false});
     }
 
-    onSliderChange = (range) => {
+    handlePlay = () => {
+        var intervalId = setInterval(this.changeFrame, this.state.speed);
+        this.setState({intervalId: intervalId, play: true});
+    }
+
+    onSliderChange = (value) => {
         const {maxFrame, gif} = this.state
-        if (maxFrame && gif) {
-            let [a, z] = range
-            let frame = (maxFrame * a / 100).toFixed()
-            this.moveToFrame(frame)
+        if (maxFrame && gif && value < maxFrame) {
+            this.moveToFrame(value)
         }
     }
 
     render() {
-        const style = {width: 400, margin: 50};
         const {classes} = this.props;
-        const {currentFrame, maxFrame, gif, uploaded} = this.state
+        const {currentFrame, maxFrame, gif, uploaded, play} = this.state
         const bl = (currentFrame / maxFrame * 100).toFixed()
         return (
-            <div>
-                <img src="" alt="" id="img"/>
-                <canvas id="canvas"></canvas>
+            <div className={classes.wrap}>
+                <Card className={classes.card}>
+                    <canvas id="canvas" className={classes.media}>
+                    </canvas>
+                    <Slider value={currentFrame}
+                            min={0}
+                            max={maxFrame}
+                            onChange={this.onSliderChange}/>
+                </Card>
+
                 <div>
-                    {
-                        uploaded ? <CircularProgress className={classes.progress}/> : <div/>
-                    }
+
+                    <div>
+                        <input
+                            onChange={this.handleFileChange}
+                            accept="image/gif"
+                            className={classes.input}
+                            id="raised-button-file"
+                            multiple
+                            type="file"
+                        />
+                        <label htmlFor="raised-button-file">
+                            <Button variant="raised" component="span" className={classes.button}>
+                                {
+                                    uploaded ? <CircularProgress
+                                        variant="determinate"
+                                        size={50}/> : '上传'
+                                }
+                            </Button>
+                        </label>
+
+
+                        {
+                            play ? <Button onClick={this.handleStop} variant="raised">
+                                暂停
+                            </Button> : <Button onClick={this.handlePlay} variant="raised">
+                                播放
+                            </Button>
+                        }
+
+                    </div>
+
                 </div>
 
-                <div style={style}>
-                    <Range
-                        defaultValue={[0, 100]} min={0} max={100}
-                        value={[gif ? bl : 0, 100]}
-                        allowCross={false} onChange={this.onSliderChange}/>
-                </div>
-                <input
-                    onChange={this.handleFileChange}
-                    accept="image/*"
-                    className={classes.input}
-                    id="raised-button-file"
-                    multiple
-                    type="file"
-                />
-                <label htmlFor="raised-button-file">
-                    <Button variant="raised" component="span" className={classes.button}>
-                        Upload
-                    </Button>
-                </label>
-                <Button onClick={this.handleStop} variant="raised">暂停/播放</Button>
                 <div>
-                    <TextField
-                        id="frame"
-                        label="frame"
-                        className={classes.textField}
-                        value={this.state.currentFrame}
-                        onChange={this.handleFrameChange}
-                        tyoe="number"
-                        margin="normal"
-                    />
+                    当前帧:{this.state.currentFrame}
+                    {/*<TextField*/}
+                        {/*id="frame"*/}
+                        {/*label="frame"*/}
+                        {/*className={classes.textField}*/}
+                        {/*value={this.state.currentFrame}*/}
+                        {/*onChange={this.handleFrameChange}*/}
+                        {/*type="number"*/}
+                        {/*margin="normal"*/}
+                    {/*/>*/}
                 </div>
                 <div>
                     <TextField
@@ -250,7 +273,7 @@ class Gif extends React.Component {
                         className={classes.textField}
                         value={this.state.speed}
                         onChange={this.handleSpeedChange}
-                        tyoe="number"
+                        type="number"
                         margin="normal"
                     />
                 </div>
