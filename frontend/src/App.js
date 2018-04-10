@@ -33,6 +33,12 @@ const styles = theme => ({
     wrap: {
         margin: '0 auto',
         width: 700
+    },
+    hide: {
+        display: 'none',
+    },
+    show: {
+        display: 'block',
     }
 });
 
@@ -79,28 +85,38 @@ class Gif extends React.Component {
         }
     }
 
+    canvasToGif = () => {
+
+    }
 
     showFrame = () => {
-        const {context, gif, currentFrame, textData, gifInfo: {width, height}} = this.state
+        const {context, gif, currentFrame, maxFrame, textData, gifInfo: {width, height}} = this.state
         let thisFrame = textData.filter(item => {
             let [a, z] = item.timeDuration
-            if (currentFrame >= a && currentFrame <= z) {
+            if (currentFrame >= a && currentFrame < z) {
                 return true
             } else {
                 return false
             }
         });
-        context.putImageData(gif[currentFrame], 0, 0)
+
+        if (currentFrame >= 0 && currentFrame < maxFrame) {
+            console.log(gif[currentFrame])
+            context.putImageData(gif[currentFrame], 0, 0)
+        }
+
+        console.log(context.getImageData(0, 0, width, height))
 
 
-        if (thisFrame.length === 1) {
-
-            const startPx = parseInt((width - thisFrame[0].text.length * 20 ) / 2)
-
+        if (thisFrame.length > 0) {
+            const startPx = parseInt(width / 2)
             context.font = '20px serif';
-            context.textAlign = 'center'
+            context.textAlign = 'center';
+            context.textBaseline = 'bottom';
             context.fillStyle = "#fff";
-            context.fillText(thisFrame[0].text, startPx, height - 20, width)
+            context.strokeText(thisFrame[0].text, startPx, height, width)
+            context.fillText(thisFrame[0].text, startPx, height, width)
+
         }
     }
 
@@ -199,7 +215,7 @@ class Gif extends React.Component {
 
             this.setState({
                 gif: images,
-                maxFrame: frameNums,
+                maxFrame: frameNums - 1,
                 canvas,
                 context,
                 uploaded: false,
