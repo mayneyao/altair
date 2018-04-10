@@ -7,6 +7,7 @@ import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import TextField from 'material-ui/TextField';
 
+
 let GifReader = (require('omggif')).GifReader;
 
 const Range = Slider.Range;
@@ -60,7 +61,8 @@ class Gif extends React.Component {
             context: null,
             data: [],
             speed: 80,
-            uploaded: false
+            uploaded: false,
+            textData: [],
         }
     }
 
@@ -78,17 +80,37 @@ class Gif extends React.Component {
     }
 
 
+    showFrame = () => {
+        const {context, gif, currentFrame, textData, gifInfo: {width, height}} = this.state
+        let thisFrame = textData.filter(item => {
+            let [a, z] = item.timeDuration
+            if (currentFrame >= a && currentFrame <= z) {
+                return true
+            } else {
+                return false
+            }
+        });
+        context.putImageData(gif[currentFrame], 0, 0)
+
+
+        if (thisFrame.length === 1) {
+
+            const startPx = parseInt((width - thisFrame[0].text.length * 20 ) / 2)
+
+            context.font = '20px serif';
+            context.textAlign = 'center'
+            context.fillStyle = "#fff";
+            context.fillText(thisFrame[0].text, startPx, height - 20, width)
+        }
+    }
+
     moveToFrame = (num) => {
-        const {context} = this.state
-        const {gif, currentFrame, maxFrame, data} = this.state
         try {
-            context.putImageData(gif[num], 0, 0)
+            this.showFrame()
         } catch (error) {
-            console.error(gif)
             console.error(num)
             console.error(error)
         }
-
         this.setState({
             currentFrame: num
         })
@@ -100,13 +122,13 @@ class Gif extends React.Component {
     }
     changeFrame = () => {
         const {context} = this.state
-        const {gif, currentFrame, maxFrame} = this.state
+        const {gif, currentFrame, maxFrame, textData} = this.state
         if (gif && currentFrame < maxFrame) {
             this.setState({
                 currentFrame: this.state.currentFrame + 1,
             })
             if (gif[currentFrame]) {
-                context.putImageData(gif[currentFrame], 0, 0)
+                this.showFrame()
             }
         } else if (currentFrame == maxFrame) {
             clearInterval(this.state.intervalId);
@@ -180,7 +202,11 @@ class Gif extends React.Component {
                 maxFrame: frameNums,
                 canvas,
                 context,
-                uploaded: false
+                uploaded: false,
+                gifInfo: {
+                    width: gif.width,
+                    height: gif.height
+                }
             })
             this.showFirstFrame()
             // this.changeFrame()
@@ -205,10 +231,43 @@ class Gif extends React.Component {
         }
     }
 
+    handleStartChange = (event) => {
+        const start = event.target.value
+        clearInterval(this.state.intervalId);
+        this.moveToFrame(start)
+        this.setState({
+            start
+        })
+    }
+
+    handleEndChange = (event) => {
+        const end = event.target.value
+        clearInterval(this.state.intervalId);
+        this.moveToFrame(end)
+        this.setState({
+            end
+        })
+    }
+
+    handleTextChange = (event) => {
+        const text = event.target.value
+        this.setState({
+            text
+        })
+    }
+
+    AddTxt = () => {
+        const {start, end, text} = this.state
+        this.setState({
+            textData: [...this.state.textData, {timeDuration: [start, end], text}]
+        });
+    }
+
     render() {
         const {classes} = this.props;
-        const {currentFrame, maxFrame, gif, uploaded, play} = this.state
+        const {currentFrame, maxFrame, gif, uploaded, play, textData} = this.state
         const bl = (currentFrame / maxFrame * 100).toFixed()
+        const textIndex = textData.length
         return (
             <div className={classes.wrap}>
                 <Card className={classes.card}>
@@ -256,15 +315,6 @@ class Gif extends React.Component {
 
                 <div>
                     当前帧:{this.state.currentFrame}
-                    {/*<TextField*/}
-                        {/*id="frame"*/}
-                        {/*label="frame"*/}
-                        {/*className={classes.textField}*/}
-                        {/*value={this.state.currentFrame}*/}
-                        {/*onChange={this.handleFrameChange}*/}
-                        {/*type="number"*/}
-                        {/*margin="normal"*/}
-                    {/*/>*/}
                 </div>
                 <div>
                     <TextField
@@ -278,6 +328,47 @@ class Gif extends React.Component {
                     />
                 </div>
 
+                <div>
+                    {
+                        textData.map((data, index) => {
+                            const {timeDuration, text} = data
+                            let [a, z] = timeDuration
+                            return <div id={`text-data-${index}`}>
+                                {a}-{z}:{text}
+                            </div>
+                        })
+                    }
+                </div>
+
+                <div>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id={`text-data-${textIndex}-start`}
+                        label="开始"
+                        type="number"
+                        onChange={this.handleStartChange}
+                    />
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id={`text-data-${textIndex}-end`}
+                        label="结束"
+                        type="number"
+                        onChange={this.handleEndChange}
+                    />
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id={`text-data-${textIndex}-text`}
+                        label="字幕"
+                        type="text"
+                        onChange={this.handleTextChange}
+                    />
+                    <Button onClick={this.AddTxt} variant="raised">
+                        添加
+                    </Button>
+                </div>
             </div>
         );
     }
