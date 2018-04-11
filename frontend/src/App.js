@@ -222,11 +222,15 @@ class Gif extends React.Component {
 
         fr.onload = () => {
             let gif = new GifReader(new Uint8Array(fr.result))
+            const {width, height} = gif
+            canvas.setAttribute("width", width + 10)
+            canvas.setAttribute("height", height + 10)
+
             let allFrames = []
             const frameNums = gif.numFrames()
 
             for (let i = 0; i < frameNums; i++) {
-                let image = context.createImageData(gif.width, gif.height)
+                let image = context.createImageData(width, height)
                 gif.decodeAndBlitFrameRGBA(i, image.data);
                 let frame = gif.frameInfo(i)
                 Object.assign(frame, image)
@@ -411,7 +415,7 @@ class Gif extends React.Component {
     }
 
 
-    downloadFile = ()=>{
+    downloadFile = () => {
         const {newFileUrl} = this.state
         let a = document.createElement("a");
         document.body.appendChild(a);
@@ -420,6 +424,7 @@ class Gif extends React.Component {
         a.download = 'happy';
         a.click();
     }
+
     componentWillUnmount() {
         // use intervalId from the state to clear the interval
         if (this.state.intervalId) {
@@ -577,7 +582,9 @@ class Gif extends React.Component {
                                 <DialogTitle id="alert-dialog-title">{"Use Google's location service?"}</DialogTitle>
                                 <DialogContent>
                                     <DialogContentText id="alert-dialog-description">
-                                        <img src={newFileUrl}/>
+                                        <img src={newFileUrl} style={{
+                                            width:'100%'
+                                        }}/>
                                     </DialogContentText>
                                 </DialogContent>
                                 <DialogActions>
