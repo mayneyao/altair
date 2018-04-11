@@ -6,9 +6,16 @@ import Card from 'material-ui/Card';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import TextField from 'material-ui/TextField';
+import List, {ListItem, ListItemText} from 'material-ui/List'
+import {GifWriter} from 'omggif'
+import GIFEncoder from './lib/jsgif/GIFEncoder'
+import encode64 from './lib/jsgif/b64'
 
+const GifReader = (require('omggif')).GifReader;
 
-let GifReader = (require('omggif')).GifReader;
+// const encode64 = new B64.Encoder();
+// let GifWriter = (require('omggif')).GifWriter;
+
 
 const Range = Slider.Range;
 
@@ -138,7 +145,11 @@ class Gif extends React.Component {
     }
     changeFrame = () => {
         const {context} = this.state
-        const {gif, currentFrame, maxFrame, textData} = this.state
+        const {
+            gif, currentFrame, maxFrame, textData
+            , gifInfo: {width, height}
+        } = this.state
+
         if (gif && currentFrame < maxFrame) {
             this.setState({
                 currentFrame: this.state.currentFrame + 1,
@@ -191,6 +202,7 @@ class Gif extends React.Component {
                 allFrames.push(frame)
             }
 
+            console.log(allFrames)
             let parseFrames = [allFrames[0]]
             let images = []
             allFrames.map((eachFrame, index) => {
@@ -213,6 +225,7 @@ class Gif extends React.Component {
                 }
             })
 
+            console.log(gif)
             this.setState({
                 gif: images,
                 maxFrame: frameNums - 1,
@@ -222,7 +235,8 @@ class Gif extends React.Component {
                 gifInfo: {
                     width: gif.width,
                     height: gif.height
-                }
+                },
+                gifAllInfo: gif
             })
             this.showFirstFrame()
             // this.changeFrame()
@@ -279,6 +293,93 @@ class Gif extends React.Component {
         });
     }
 
+    saveToGif = () => {
+        const {gifInfo: {width, height}, maxFrame, speed} = this.state
+
+
+        let canvas = document.getElementById("canvas")
+        let context = canvas.getContext("2d")
+
+        const {gif, textData} = this.state
+
+        let encoder = new GIFEncoder();
+        encoder.setRepeat(0); //auto-loop
+        encoder.setDelay(speed);
+        console.log(encoder.start())
+
+        for (let currentFrame = 0; currentFrame < maxFrame; currentFrame++) {
+            let thisFrame = textData.filter(item => {
+                let [a, z] = item.timeDuration
+                if (currentFrame >= a && currentFrame < z) {
+                    return true
+                } else {
+                    return false
+                }
+            });
+
+            if (currentFrame >= 0 && currentFrame < maxFrame) {
+                context.putImageData(gif[currentFrame], 0, 0)
+            }
+            if (thisFrame.length > 0) {
+                const startPx = parseInt(width / 2)
+                context.font = '20px serif';
+                context.textAlign = 'center';
+                context.textBaseline = 'bottom';
+                context.fillStyle = "#fff";
+                context.strokeText(thisFrame[0].text, startPx, height, width)
+                context.fillText(thisFrame[0].text, startPx, height, width)
+
+            }
+            encoder.addFrame(context)
+            console.log(currentFrame)
+        }
+
+        encoder.finish()
+        let gifUrl = 'data:image/gif;base64,' + encode64(encoder.stream().getData())
+        this.setState({
+            newFileUrl: gifUrl
+        })
+
+        // var capturer = new CCapture( { format: 'gif', workersPath: 'js/' } );
+        // console.log(canvas.toDataURL('image/gif'))
+        //
+        // //
+        // let fr = new FileReader()
+        // let buffer = new ArrayBuffer(1024 * 1024 * 5)
+        // let gifWriter = new GifWriter(buffer, width, height, {
+        //     palette: 13
+        // })
+        //
+        // let thisFrame = context.getImageData(0, 0, width, height)
+        // console.log(thisFrame)
+        //
+        // const rgbData = thisFrame.data.map((item,index)=>{
+        //     if(!(index%4==3)){
+        //         return item
+        //     }
+        // })
+        // gifWriter.addFrame(0, 0, width, height, rgbData , {
+        //     disposal: 2
+        // })
+        //
+        // // let fileBuffer = Uint8ClampedArray.from(buffer)
+        // let fileBuffer = buffer.slice(0, gifWriter.end())
+        //
+        // let newGifFile = new File(fileBuffer, '测试.gif', {
+        //     type: 'image/gif'
+        // })
+        //
+        // let frd = new FileReader()
+        // frd.onload = () => {
+        //     this.setState({
+        //         newFileUrl: frd.result
+        //     })
+        // }
+        // frd.readAsDataURL(newGifFile)
+
+
+    }
+
     render() {
         const {classes} = this.props;
         const {currentFrame, maxFrame, gif, uploaded, play, textData} = this.state
@@ -294,7 +395,7 @@ class Gif extends React.Component {
                             max={maxFrame}
                             onChange={this.onSliderChange}/>
                 </Card>
-
+                <img src={this.state.newFileUrl}/>
                 <div>
 
                     <div>
@@ -325,6 +426,9 @@ class Gif extends React.Component {
                             </Button>
                         }
 
+                        <Button onClick={this.saveToGif} variant="raised">
+                            保存
+                        </Button>
                     </div>
 
                 </div>
@@ -345,15 +449,19 @@ class Gif extends React.Component {
                 </div>
 
                 <div>
-                    {
-                        textData.map((data, index) => {
-                            const {timeDuration, text} = data
-                            let [a, z] = timeDuration
-                            return <div id={`text-data-${index}`}>
-                                {a}-{z}:{text}
-                            </div>
-                        })
-                    }
+                    <List component="nav">
+                        {
+                            textData.map((data, index) => {
+                                const {timeDuration, text} = data
+                                let [a, z] = timeDuration
+                                return <div id={`text-data-${index}`}>
+                                    <ListItem button>
+                                        <ListItemText primary={`${a} - ${z}:${text}`}/>
+                                    </ListItem>
+                                </div>
+                            })
+                        }
+                    </List>
                 </div>
 
                 <div>
