@@ -579,7 +579,6 @@ class Gif extends React.Component {
 
                         {
                             genGifDone ? <div>
-                                <DialogTitle id="alert-dialog-title">{"Use Google's location service?"}</DialogTitle>
                                 <DialogContent>
                                     <DialogContentText id="alert-dialog-description">
                                         <img src={newFileUrl} style={{
