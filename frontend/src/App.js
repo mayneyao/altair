@@ -322,7 +322,6 @@ class Gif extends React.Component {
         this.setState({
             textData: [...this.state.textData, {timeDuration: [start, end], text}]
         });
-        this.saveToGif()
     }
 
     saveToGif = () => {
