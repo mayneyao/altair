@@ -20,6 +20,7 @@ import SaveIcon from '@material-ui/icons/Save';
 import PreIcon from '@material-ui/icons/SkipPrevious';
 import NextIcon from '@material-ui/icons/SkipNext';
 import VisibilityIcon from '@material-ui/icons/Visibility';
+import BuildIcon from '@material-ui/icons/Build';
 import {CircularProgress, LinearProgress} from 'material-ui/Progress';
 import axios from 'axios';
 
@@ -132,19 +133,19 @@ class Gif extends React.Component {
         });
     }
 
-    showFrame = () => {
+    showFrame = (num) => {
         const {context, gif, currentFrame, maxFrame, textData, gifInfo: {width, height}} = this.state
         let thisFrame = textData.filter(item => {
             let [a, z] = item.timeDuration
-            if (currentFrame >= a && currentFrame < z) {
+            if (num >= a && num < z) {
                 return true
             } else {
                 return false
             }
         });
 
-        if (currentFrame >= 0 && currentFrame < maxFrame) {
-            context.putImageData(gif[currentFrame], 0, 0)
+        if (num >= 0 && num < maxFrame) {
+            context.putImageData(gif[num], 0, 0)
         }
 
         if (thisFrame.length > 0) {
@@ -173,7 +174,7 @@ class Gif extends React.Component {
 
     moveToFrame = (num) => {
         try {
-            this.showFrame()
+            this.showFrame(num)
         } catch (error) {
             console.error(num)
             console.error(error)
@@ -195,7 +196,7 @@ class Gif extends React.Component {
                 currentFrame: this.state.currentFrame + 1,
             })
             if (gif[currentFrame]) {
-                this.showFrame()
+                this.showFrame(currentFrame)
             }
         } else if (currentFrame == maxFrame) {
             clearInterval(this.state.intervalId);
@@ -370,12 +371,24 @@ class Gif extends React.Component {
     addText = () => {
         this.handleStop()
         const {currentFrame, textData} = this.state
+
+        let startFrame;
+        if (textData.length === 0) {
+            startFrame = currentFrame
+        } else if (currentFrame > textData[textData.length - 1].timeDuration[1]) {
+            startFrame = currentFrame
+        } else {
+            startFrame = textData[textData.length - 1].timeDuration[1]
+        }
+
         let newTextData = [...textData, {
-            timeDuration: [currentFrame, undefined],
+            timeDuration: [startFrame, undefined],
             text: ''
         }]
         this.setState({
-            textData: newTextData
+            textData: newTextData,
+            outputUrl: false,
+            perview: false
         })
     }
 
@@ -459,10 +472,6 @@ class Gif extends React.Component {
         this.handleStop()
         this.showFirstFrame()
         this.handlePlay()
-        const {perview} = this.state
-        if (!perview) {
-            this.makeGif()
-        }
         this.setState({
             perview: true
         })
@@ -506,6 +515,13 @@ class Gif extends React.Component {
         a.download = 'happy';
         a.click();
     }
+
+    playPartOfFrames = (start, end) => {
+        for (let i = start; i < end; i++) {
+            this.showFrame(i)
+        }
+    }
+
 
     componentDidUpdate() {
         const {genGifDone, previewOpen, isFileParseDone, file} = this.state
@@ -583,7 +599,6 @@ class Gif extends React.Component {
                                 }}>
                                     <Grid container spacing={24}>
                                         <Grid item xs={4} sm={4} md/>
-
                                         <Grid item xs={4} sm={4} md>
                                             <Grid container spacing={2}>
                                                 <Grid item xs={4} sm={4} md={4}>
@@ -612,15 +627,22 @@ class Gif extends React.Component {
 
                                         <Grid item xs={4} sm={4} md>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={4} sm={4} md={4}>
+                                                <Grid item xs={3} sm={3} md={3}>
                                                     <IconButton onClick={this.addText}><AddIcon/></IconButton>
                                                 </Grid>
 
-                                                <Grid item xs={4} sm={4} md={4}>
+                                                <Grid item xs={3} sm={3} md={3}>
+
                                                     <IconButton
                                                         onClick={this.handlePreviewOpen}><VisibilityIcon/></IconButton>
                                                 </Grid>
-                                                <Grid item xs={4} sm={4} md={4}>
+                                                <Grid item xs={3} sm={3} md={3}>
+                                                    <IconButton onClick={this.makeGif} variant="raised">
+                                                        <BuildIcon/>
+                                                    </IconButton>
+                                                </Grid>
+                                                <Grid item xs={3} sm={3} md={3}>
+
                                                     {
                                                         outputUrl ?
                                                             <IconButton
@@ -665,32 +687,48 @@ class Gif extends React.Component {
                         />
                     </div>
 
-                    {/*<div>*/}
-                    {/*<List component="nav">*/}
-                    {/*{*/}
-                    {/*textData.map((data, index) => {*/}
-                    {/*const {timeDuration, text} = data*/}
-                    {/*let [a, z] = timeDuration*/}
-                    {/*return <div id={`text-data-${index}`} key={`text-data-${index}`}>*/}
-                    {/*<ListItem button>*/}
-                    {/*<ListItemText primary={`${a} - ${z}:${text}`}/>*/}
-                    {/*</ListItem>*/}
-                    {/*</div>*/}
-                    {/*})*/}
-                    {/*}*/}
-                    {/*</List>*/}
-                    {/*</div>*/}
-
                     <div style={{padding: 20}}>
                         {
                             textData.map((data, index) => {
-                                let [a, z] = data.timeDuration
-                                let text = data.text
+                                let [a, z] = data.timeDuration;
+                                let text = data.text;
+                                let startInputProps = {
+                                    min: 0,
+                                    max: maxFrame - 1
+                                }
+                                let endInputProps = {
+                                    min: 0,
+                                    max: maxFrame - 1
+                                }
+                                // let min, max,startInputProps,endInputProps;
+                                // if (index === 0) {
+                                //     startInputProps = {
+                                //         min: 0,
+                                //         max: maxFrame - 1
+                                //     };
+                                //     endInputProps = {
+                                //         min: a,
+                                //         max: maxFrame - 1
+                                //     };
+                                //
+                                // } else {
+                                //     [min, max] = textData[index - 1].timeDuration
+                                //     startInputProps = {
+                                //         min: max+1,
+                                //         max: maxFrame - 1
+                                //     };
+                                //     endInputProps = {
+                                //         min: a,
+                                //         max: maxFrame - 1
+                                //     };
+                                // }
+
+
                                 return <Grid container spacing={12}>
                                     <Grid item xs={1} sm={1} md={1}>
                                         <span style={{
-                                            fontSize:'2em',
-                                            fontweight:500
+                                            fontSize: '2em',
+                                            fontweight: 500
                                         }}>
                                             {
                                                 index
@@ -705,6 +743,7 @@ class Gif extends React.Component {
                                             id={`text-data-${index}-start`}
                                             label="开始"
                                             type="number"
+                                            inputProps={startInputProps}
                                             value={a}
                                             onChange={(e) => this.handleStartChange(e, index)}
                                         />
@@ -717,6 +756,7 @@ class Gif extends React.Component {
                                             id={`text-data-${index}-end`}
                                             label="结束"
                                             value={z}
+                                            inputProps={endInputProps}
                                             type="number"
                                             onChange={(e) => {
                                                 this.handleEndChange(e, index)
@@ -736,9 +776,20 @@ class Gif extends React.Component {
                                             }}
                                         />
                                     </Grid>
+                                    {/*<Grid item xs={1} sm={1} md={1}>*/}
+                                        {/*<IconButton onClick={() => {*/}
+                                            {/*this.playPartOfFrames(a, z)*/}
+                                        {/*}}><VisibilityIcon/></IconButton>*/}
+                                    {/*</Grid>*/}
                                 </Grid>
                             })
                         }
+                        <div>
+                            <Button variant="fab" className={classes.fab} component="span" color='primary'>
+                                <AddIcon/>
+                            </Button>
+                        </div>
+
                     </div>
 
                     <Dialog
