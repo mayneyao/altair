@@ -5,7 +5,6 @@ import Card from 'material-ui/Card';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import TextField from 'material-ui/TextField';
-import List, {ListItem, ListItemText} from 'material-ui/List'
 import {GifWriter} from 'omggif'
 import GIFEncoder from './lib/jsgif/GIFEncoder'
 import encode64 from './lib/jsgif/b64'
@@ -16,19 +15,21 @@ import IconButton from 'material-ui/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import Drawer from 'material-ui/Drawer';
 import AddIcon from '@material-ui/icons/Add';
+import DownLoadIcon from '@material-ui/icons/FileDownload';
 import SaveIcon from '@material-ui/icons/Save';
 import PreIcon from '@material-ui/icons/SkipPrevious';
 import NextIcon from '@material-ui/icons/SkipNext';
-
+import VisibilityIcon from '@material-ui/icons/Visibility';
+import {CircularProgress, LinearProgress} from 'material-ui/Progress';
+import axios from 'axios';
 
 import StopIcon from '@material-ui/icons/Stop';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Grid from 'material-ui/Grid';
-import Dialog, {DialogActions, DialogContent, DialogContentText, DialogTitle,} from 'material-ui/Dialog';
-import {CircularProgress} from 'material-ui/Progress';
+import Dialog, {DialogActions, DialogContent, DialogContentText,} from 'material-ui/Dialog';
+
 
 const GifReader = (require('omggif')).GifReader;
-
 
 const styles = theme => ({
     progress: {
@@ -78,10 +79,21 @@ const styles = theme => ({
         position: 'absolute',
         bottom: theme.spacing.unit * 2 + 60,
         right: theme.spacing.unit * 2,
+    },
+    start: {
+        width: 50
+    },
+    end: {
+        width: 50
+    },
+    text: {
+        marginLeft: theme.spacing.unit,
+        marginRight: theme.spacing.unit,
+        width: 300,
     }
 });
 
-const frameMix = (fA, fZ, disposal, transparent_index) => {
+const frameMix = (fA, fZ) => {
     for (let i = 0; i < fA.length; i += 4) {
         if (fA[i] == 0 && fA[i + 1] == 0 && fA[i + 2] == 0 && fA[i + 3] == 0) {
             continue;
@@ -99,14 +111,13 @@ class Gif extends React.Component {
 
     constructor(props) {
         super(props)
-        this.handlePreviewOpen = this.handlePreviewOpen.bind(this);
         this.state = {
             currentFrame: 0,
             play: true,
             context: null,
             data: [],
             speed: 80,
-            uploaded: false,
+            isFileParseDone: false,
             textData: [],
             drawerOpen: false,
             previewOpen: false,
@@ -195,10 +206,11 @@ class Gif extends React.Component {
         }
     }
     showFirstFrame = () => {
-        const {context, gif, currentFrame, maxFrame} = this.state
+        const {context, gif} = this.state
         context.putImageData(gif[0], 0, 0)
         this.setState({
-            play: false
+            play: false,
+            currentFrame: 0
         })
     }
 
@@ -210,21 +222,17 @@ class Gif extends React.Component {
         clearInterval(this.state.intervalId);
     }
 
-    handleFileChange = (event) => {
+    parseGif = () => {
+        const {file} = this.state
         let canvas = document.getElementById("canvas")
         let context = canvas.getContext("2d")
-
-        const file = event.target.files[0]
-        this.setState({
-            uploaded: true
-        })
         let fr = new FileReader()
 
         fr.onload = () => {
             let gif = new GifReader(new Uint8Array(fr.result))
             const {width, height} = gif
-            canvas.setAttribute("width", width + 10)
-            canvas.setAttribute("height", height + 10)
+            canvas.setAttribute("width", width)
+            canvas.setAttribute("height", height)
 
             let allFrames = []
             const frameNums = gif.numFrames()
@@ -240,10 +248,11 @@ class Gif extends React.Component {
 
             let parseFrames = [allFrames[0]]
             let images = []
+
             allFrames.map((eachFrame, index) => {
                 if (index < frameNums && index > 0) {
                     if (eachFrame.disposal == 1) {
-                        eachFrame.data = frameMix(eachFrame.data, parseFrames[index - 1].data, eachFrame.disposal, eachFrame.transparent_index)
+                        eachFrame.data = frameMix(eachFrame.data, parseFrames[index - 1].data)
                     } else if (eachFrame.disposal == 3) {
                         console.log(index)
                         eachFrame.data = parseFrames[index - 1].data
@@ -251,7 +260,6 @@ class Gif extends React.Component {
                     parseFrames.push(eachFrame)
 
                     let process = (index / frameNums * 100).toFixed()
-                    this.showProcess(context, gif.width, gif.height, process)
                     let image = context.createImageData(gif.width, gif.height)
                     eachFrame.data.map((i, index) => {
                         image.data[index] = i
@@ -260,14 +268,13 @@ class Gif extends React.Component {
 
                 }
             })
-
             console.log(gif)
             this.setState({
                 gif: images,
                 maxFrame: frameNums - 1,
                 canvas,
                 context,
-                uploaded: false,
+                isFileParseDone: true,
                 gifInfo: {
                     width: gif.width,
                     height: gif.height
@@ -276,7 +283,24 @@ class Gif extends React.Component {
             })
             this.showFirstFrame()
         }
-        fr.readAsArrayBuffer(file)
+
+        if (file) {
+            fr.readAsArrayBuffer(file)
+        }
+
+    }
+
+    handleFileChange = (event) => {
+        const file = event.target.files[0]
+        if (file) {
+            this.setState({
+                file,
+                isFileParseDone: false,
+            }, () => {
+                this.parseGif()
+            })
+        }
+
     }
 
     handleStop = () => {
@@ -296,36 +320,79 @@ class Gif extends React.Component {
         }
     }
 
-    handleStartChange = (event) => {
+    handleStartChange = (event, index) => {
         const start = event.target.value
-        clearInterval(this.state.intervalId);
+        const {textData} = this.state
+
+        let newTextData = textData.slice()
+
+        let [a, z] = newTextData[index].timeDuration
+        newTextData[index].timeDuration = [start, z]
+
+        this.handleStop()
         this.moveToFrame(start)
         this.setState({
+            textData: newTextData,
             start
         })
     }
 
-    handleEndChange = (event) => {
+    handleEndChange = (event, index) => {
         const end = event.target.value
-        clearInterval(this.state.intervalId);
+        const {textData} = this.state
+
+        let newTextData = textData.slice()
+
+        let [a, z] = newTextData[index].timeDuration
+        newTextData[index].timeDuration = [a, end]
+
+        this.handleStop()
         this.moveToFrame(end)
         this.setState({
+            textData: newTextData,
             end
         })
     }
 
-    handleTextChange = (event) => {
+    handleTextChange = (event, index) => {
         const text = event.target.value
+        const {textData} = this.state
+        let newTextData = textData.slice()
+        newTextData[index].text = text
+
+        this.handleStop()
         this.setState({
-            text
+            textData: newTextData,
+
         })
     }
 
-    AddTxt = () => {
-        const {start, end, text} = this.state
+    addText = () => {
+        this.handleStop()
+        const {currentFrame, textData} = this.state
+        let newTextData = [...textData, {
+            timeDuration: [currentFrame, undefined],
+            text: ''
+        }]
         this.setState({
-            textData: [...this.state.textData, {timeDuration: [start, end], text}]
-        });
+            textData: newTextData
+        })
+    }
+
+    makeGif = () => {
+        let data = new FormData()
+        const {textData, file} = this.state
+        data.append('text', JSON.stringify(textData))
+        data.append('file', file)
+        axios.post('/make_gif/', data, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        }).then(res => {
+            this.setState({
+                outputUrl: res.data.file,
+            })
+        })
     }
 
     saveToGif = () => {
@@ -388,10 +455,26 @@ class Gif extends React.Component {
         })
     }
 
-    async handlePreviewOpen() {
-        await this.setStateAsync({previewOpen: true})
-        this.saveToGif()
+    handlePreviewOpen = () => {
+        this.handleStop()
+        this.showFirstFrame()
+        this.handlePlay()
+        const {perview} = this.state
+        if (!perview) {
+            this.makeGif()
+        }
+        this.setState({
+            perview: true
+        })
     }
+
+    handlePreviewClose = () => {
+        this.handleStop()
+        this.setState({
+            perview: false
+        })
+    }
+
 
     handleClose = () => {
         this.setState({
@@ -414,15 +497,38 @@ class Gif extends React.Component {
         this.moveToFrame(currentFrame + 1)
     }
 
-
     downloadFile = () => {
-        const {newFileUrl} = this.state
+        const {outputUrl} = this.state
         let a = document.createElement("a");
         document.body.appendChild(a);
         a.style = "display: none";
-        a.href = newFileUrl;
+        a.href = outputUrl;
         a.download = 'happy';
         a.click();
+    }
+
+    componentDidUpdate() {
+        const {genGifDone, previewOpen, isFileParseDone, file} = this.state
+        // if (previewOpen && !genGifDone) {
+        //     this.saveToGif()
+        // }
+    }
+
+    shouldShowCircularProgress = () => {
+        const {file, isFileParseDone} = this.state
+        if (file) {
+            if (isFileParseDone) {
+                return false
+            } else {
+                return true
+            }
+        } else {
+            if (isFileParseDone) {
+                return false
+            } else {
+                return false
+            }
+        }
     }
 
     componentWillUnmount() {
@@ -434,9 +540,10 @@ class Gif extends React.Component {
 
     render() {
         const {classes} = this.props;
-        const {currentFrame, maxFrame, gif, uploaded, play, textData, genGifDone, newFileUrl} = this.state
+        const {currentFrame, maxFrame, gif, isFileParseDone, file, play, textData, genGifDone, newFileUrl, outputUrl, perview} = this.state
         const bl = (currentFrame / maxFrame * 100).toFixed()
         const textIndex = textData.length
+        const _shouldShowCircularProgress = this.shouldShowCircularProgress()
         return (
             <Grid container spacing={24}>
 
@@ -458,61 +565,95 @@ class Gif extends React.Component {
 
                 <Grid item xs={12} sm={12} md/>
                 <Grid item xs={12} sm={12} md={6}>
+                    <div className={classes.root}>
+                        {
+                            _shouldShowCircularProgress ?
+                                <LinearProgress color="secondary"/> : ""
+                        }
+                    </div>
                     <Card>
                         <div style={{margin: '0 auto'}}>
                             <canvas id="canvas" className={classes.media}>
                             </canvas>
                         </div>
+                        {
+                            gif ?
+                                <div style={{
+                                    textAlign: 'center'
+                                }}>
+                                    <Grid container spacing={24}>
+                                        <Grid item xs={4} sm={4} md/>
 
-                        <div style={{
-                            textAlign: 'center'
-                        }}>
-                            <IconButton onClick={this.handlePreFrame} variant="raised">
-                                <PreIcon/>
-                            </IconButton>
-                            {
-                                play ? <IconButton onClick={this.handleStop} variant="raised">
-                                    <StopIcon/>
-                                </IconButton> : <IconButton onClick={this.handlePlay} variant="raised">
-                                    <PlayArrowIcon/>
-                                </IconButton>
-                            }
-                            <IconButton onClick={this.handleNextFrame} variant="raised">
-                                <NextIcon/>
-                            </IconButton>
-                            <Slider value={currentFrame}
-                                    min={0}
-                                    style={{margin: '0 auto'}}
-                                    max={maxFrame}
-                                    onChange={this.onSliderChange}/>
-                        </div>
+                                        <Grid item xs={4} sm={4} md>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={4} sm={4} md={4}>
+                                                    <IconButton onClick={this.handlePreFrame} variant="raised">
+                                                        <PreIcon/>
+                                                    </IconButton>
+                                                </Grid>
 
+                                                <Grid item xs={4} sm={4} md={4}>
+                                                    {
+                                                        play ? <IconButton onClick={this.handleStop} variant="raised">
+                                                                <StopIcon/>
+                                                            </IconButton> :
+                                                            <IconButton onClick={this.handlePlay} variant="raised">
+                                                                <PlayArrowIcon/>
+                                                            </IconButton>
+                                                    }
+                                                </Grid>
+                                                <Grid item xs={4} sm={4} md={4}>
+                                                    <IconButton onClick={this.handleNextFrame} variant="raised">
+                                                        <NextIcon/>
+                                                    </IconButton>
+                                                </Grid>
+                                            </Grid>
+                                        </Grid>
+
+                                        <Grid item xs={4} sm={4} md>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={4} sm={4} md={4}>
+                                                    <IconButton onClick={this.addText}><AddIcon/></IconButton>
+                                                </Grid>
+
+                                                <Grid item xs={4} sm={4} md={4}>
+                                                    <IconButton
+                                                        onClick={this.handlePreviewOpen}><VisibilityIcon/></IconButton>
+                                                </Grid>
+                                                <Grid item xs={4} sm={4} md={4}>
+                                                    {
+                                                        outputUrl ?
+                                                            <IconButton
+                                                                onClick={this.downloadFile}><DownLoadIcon/></IconButton> : ''
+                                                    }
+                                                </Grid>
+                                            </Grid>
+
+
+                                        </Grid>
+                                    </Grid>
+
+                                    <Slider value={currentFrame}
+                                            min={0}
+                                            style={{margin: '0 auto'}}
+                                            max={maxFrame}
+                                            onChange={this.onSliderChange}/>
+                                </div>
+                                : ''
+                        }
 
                     </Card>
-                    <div>
-                        <div>
-                            <input
-                                onChange={this.handleFileChange}
-                                accept="image/gif"
-                                className={classes.input}
-                                id="raised-button-file"
-                                multiple
-                                type="file"
-                            />
-                            <label htmlFor="raised-button-file">
-                                <Button variant="fab" className={classes.fab} component="span" color='primary'>
-                                    <AddIcon/>
-                                </Button>
-
-                            </label>
-                        </div>
-
-                    </div>
 
                     <div>
-                        当前帧:{this.state.currentFrame}
-                    </div>
-                    <div>
+                        <TextField
+                            id="frame"
+                            label="frame"
+                            className={classes.textField}
+                            value={this.state.currentFrame}
+                            type="number"
+                            margin="normal"
+                            disabled={true}
+                        />
                         <TextField
                             id="speed"
                             label="speed"
@@ -524,52 +665,82 @@ class Gif extends React.Component {
                         />
                     </div>
 
-                    <div>
-                        <List component="nav">
-                            {
-                                textData.map((data, index) => {
-                                    const {timeDuration, text} = data
-                                    let [a, z] = timeDuration
-                                    return <div id={`text-data-${index}`} key={`text-data-${index}`}>
-                                        <ListItem button>
-                                            <ListItemText primary={`${a} - ${z}:${text}`}/>
-                                        </ListItem>
-                                    </div>
-                                })
-                            }
-                        </List>
+                    {/*<div>*/}
+                    {/*<List component="nav">*/}
+                    {/*{*/}
+                    {/*textData.map((data, index) => {*/}
+                    {/*const {timeDuration, text} = data*/}
+                    {/*let [a, z] = timeDuration*/}
+                    {/*return <div id={`text-data-${index}`} key={`text-data-${index}`}>*/}
+                    {/*<ListItem button>*/}
+                    {/*<ListItemText primary={`${a} - ${z}:${text}`}/>*/}
+                    {/*</ListItem>*/}
+                    {/*</div>*/}
+                    {/*})*/}
+                    {/*}*/}
+                    {/*</List>*/}
+                    {/*</div>*/}
+
+                    <div style={{padding: 20}}>
+                        {
+                            textData.map((data, index) => {
+                                let [a, z] = data.timeDuration
+                                let text = data.text
+                                return <Grid container spacing={12}>
+                                    <Grid item xs={1} sm={1} md={1}>
+                                        <span style={{
+                                            fontSize:'2em',
+                                            fontweight:500
+                                        }}>
+                                            {
+                                                index
+                                            }
+                                        </span>
+                                    </Grid>
+                                    <Grid item xs={2} sm={2} md={2}>
+                                        <TextField
+                                            autoFocus
+                                            className={classes.start}
+                                            margin="dense"
+                                            id={`text-data-${index}-start`}
+                                            label="开始"
+                                            type="number"
+                                            value={a}
+                                            onChange={(e) => this.handleStartChange(e, index)}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={2} sm={2} md={2}>
+                                        <TextField
+                                            autoFocus
+                                            className={classes.end}
+                                            margin="dense"
+                                            id={`text-data-${index}-end`}
+                                            label="结束"
+                                            value={z}
+                                            type="number"
+                                            onChange={(e) => {
+                                                this.handleEndChange(e, index)
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={6} sm={6} md={6}>
+                                        <TextField
+                                            autoFocus
+                                            margin="dense"
+                                            id={`text-data-${index}-text`}
+                                            label="字幕"
+                                            value={text}
+                                            type="text"
+                                            onChange={(e) => {
+                                                this.handleTextChange(e, index)
+                                            }}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            })
+                        }
                     </div>
 
-                    <div>
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            id={`text-data-${textIndex}-start`}
-                            label="开始"
-                            type="number"
-                            onChange={this.handleStartChange}
-                        />
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            id={`text-data-${textIndex}-end`}
-                            label="结束"
-                            type="number"
-                            onChange={this.handleEndChange}
-                        />
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            id={`text-data-${textIndex}-text`}
-                            label="字幕"
-                            type="text"
-                            onChange={this.handleTextChange}
-                        />
-                        <Button onClick={this.AddTxt} variant="raised">
-                            添加
-                        </Button>
-                    </div>
-                    <Button onClick={this.handlePreviewOpen}>预览</Button>
                     <Dialog
                         open={this.state.previewOpen}
                         onClose={this.handleClose}
@@ -582,7 +753,7 @@ class Gif extends React.Component {
                                 <DialogContent>
                                     <DialogContentText id="alert-dialog-description">
                                         <img src={newFileUrl} style={{
-                                            width:'100%'
+                                            width: '100%'
                                         }}/>
                                     </DialogContentText>
                                 </DialogContent>
@@ -601,6 +772,25 @@ class Gif extends React.Component {
                     </Dialog>
                 </Grid>
                 <Grid item xs={12} sm={12} md/>
+                <div>
+                    <div>
+                        <input
+                            onChange={this.handleFileChange}
+                            accept="image/gif"
+                            className={classes.input}
+                            id="raised-button-file"
+                            multiple
+                            type="file"
+                        />
+                        <label htmlFor="raised-button-file">
+                            <Button variant="fab" className={classes.fab} component="span" color='primary'>
+                                <AddIcon/>
+                            </Button>
+
+                        </label>
+                    </div>
+
+                </div>
                 <Drawer open={this.state.drawerOpen} onClose={() => this.toggleDrawer(false)}>
                     <div
                         tabIndex={0}
