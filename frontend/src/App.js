@@ -6,8 +6,8 @@ import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import TextField from 'material-ui/TextField';
 import {GifWriter} from 'omggif'
-import GIFEncoder from './lib/jsgif/GIFEncoder'
-import encode64 from './lib/jsgif/b64'
+// import GIFEncoder from './lib/jsgif/GIFEncoder'
+// import encode64 from './lib/jsgif/b64'
 import AppBar from 'material-ui/AppBar';
 import Toolbar from 'material-ui/Toolbar';
 import Typography from 'material-ui/Typography';
@@ -408,58 +408,58 @@ class Gif extends React.Component {
         })
     }
 
-    saveToGif = () => {
-        const {gifInfo: {width, height}, maxFrame, speed} = this.state
-
-
-        let canvas = document.getElementById("canvas")
-        let context = canvas.getContext("2d")
-
-        const {gif, textData} = this.state
-
-        let encoder = new GIFEncoder();
-        encoder.setRepeat(0); //auto-loop
-        encoder.setDelay(speed);
-        console.log(encoder.start())
-
-        for (let currentFrame = 0; currentFrame < maxFrame; currentFrame++) {
-            let thisFrame = textData.filter(item => {
-                let [a, z] = item.timeDuration
-                if (currentFrame >= a && currentFrame < z) {
-                    return true
-                } else {
-                    return false
-                }
-            });
-
-            if (currentFrame >= 0 && currentFrame < maxFrame) {
-                context.putImageData(gif[currentFrame], 0, 0)
-            }
-            if (thisFrame.length > 0) {
-                const startPx = parseInt(width / 2)
-                context.font = '20px serif';
-                context.textAlign = 'center';
-                context.textBaseline = 'bottom';
-                context.fillStyle = "#fff";
-                context.strokeText(thisFrame[0].text, startPx, height, width)
-                context.fillText(thisFrame[0].text, startPx, height, width)
-
-            }
-            encoder.addFrame(context)
-            console.log(currentFrame)
-        }
-
-        encoder.finish()
-        let gifUrl = 'data:image/gif;base64,' + encode64(encoder.stream().getData())
-
-        fetch(gifUrl).then(res => res.blob()).then(blob => {
-                this.setState({
-                    newFileUrl: URL.createObjectURL(blob),
-                    genGifDone: true,
-                })
-            }
-        )
-    }
+    // saveToGif = () => {
+    //     const {gifInfo: {width, height}, maxFrame, speed} = this.state
+    //
+    //
+    //     let canvas = document.getElementById("canvas")
+    //     let context = canvas.getContext("2d")
+    //
+    //     const {gif, textData} = this.state
+    //
+    //     let encoder = new GIFEncoder();
+    //     encoder.setRepeat(0); //auto-loop
+    //     encoder.setDelay(speed);
+    //     console.log(encoder.start())
+    //
+    //     for (let currentFrame = 0; currentFrame < maxFrame; currentFrame++) {
+    //         let thisFrame = textData.filter(item => {
+    //             let [a, z] = item.timeDuration
+    //             if (currentFrame >= a && currentFrame < z) {
+    //                 return true
+    //             } else {
+    //                 return false
+    //             }
+    //         });
+    //
+    //         if (currentFrame >= 0 && currentFrame < maxFrame) {
+    //             context.putImageData(gif[currentFrame], 0, 0)
+    //         }
+    //         if (thisFrame.length > 0) {
+    //             const startPx = parseInt(width / 2)
+    //             context.font = '20px serif';
+    //             context.textAlign = 'center';
+    //             context.textBaseline = 'bottom';
+    //             context.fillStyle = "#fff";
+    //             context.strokeText(thisFrame[0].text, startPx, height, width)
+    //             context.fillText(thisFrame[0].text, startPx, height, width)
+    //
+    //         }
+    //         encoder.addFrame(context)
+    //         console.log(currentFrame)
+    //     }
+    //
+    //     encoder.finish()
+    //     let gifUrl = 'data:image/gif;base64,' + encode64(encoder.stream().getData())
+    //
+    //     fetch(gifUrl).then(res => res.blob()).then(blob => {
+    //             this.setState({
+    //                 newFileUrl: URL.createObjectURL(blob),
+    //                 genGifDone: true,
+    //             })
+    //         }
+    //     )
+    // }
 
 
     toggleDrawer = (open) => {
