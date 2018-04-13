@@ -8,7 +8,7 @@ from django.conf import settings
 FIlE_DIR = settings.FILE_DIR
 ORIGIN_FILE_DIR = os.path.join(FIlE_DIR, 'origin')
 OUTPUT_FILE_DIR = os.path.join(FIlE_DIR, 'output')
-FONT_PATH = '/Users/mayne/Desktop/SourceHanSansCN-Regular.otf'
+FONT_PATH = os.path.join(settings.BASE_DIR, 'SourceHanSansCN-Regular.otf')
 
 
 class Gif():
