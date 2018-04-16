@@ -21,7 +21,7 @@ def parse_file_url(filename):
         filename = os.path.join(OUTPUT_FILE_DIR, filename)
         return 'file://{}'.format(filename)
     else:
-        return '/output/{}'.format(filename)
+        return '/file/output/{}'.format(filename)
 
 
 def index(request):
