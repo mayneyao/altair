@@ -37,7 +37,7 @@ class Gif():
                 self.draw_subtitle(duration_text['timeDuration'], duration_text['text'])
             self.frames[0].save(output_filepath, save_all=True, append_images=self.frames[1:])
 
-        os.system('gifsicle {} -o {}'.format(output_filename,output_filename))
+        os.system('gifsicle {} -o {}'.format(output_filepath,output_filepath))
         return output_filename
 
     def draw_subtitle(self, duration, text):
