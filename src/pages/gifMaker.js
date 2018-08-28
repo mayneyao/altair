@@ -6,8 +6,8 @@ import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import TextField from '@material-ui/core/TextField';
 import {GifWriter} from 'omggif'
-import GIFEncoder from '../lib/jsgif/GIFEncoder';
-import encode64 from '../lib/jsgif/b64';
+import GIFEncoder from '../_jsgif/GIFEncoder';
+import encode64 from '../_jsgif/b64';
 import IconButton from '@material-ui/core/IconButton';
 import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
