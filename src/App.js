@@ -20,128 +20,115 @@ import gifMaker from './pages/gifMaker';
 
 
 const styles = theme => ({
-    media: {
-        width: '100%',
-    },
-    wrap: {
-        margin: '0 auto',
-        width: 700
-    },
-    hide: {
-        display: 'none',
-    },
-    show: {
-        display: 'block',
-    },
-    root: {
-        flexGrow: 1,
-    },
-    flex: {
-        flex: 1,
-    },
-    menuButton: {
-        marginLeft: -12,
-        marginRight: 20,
-    },
-    menuRoot: {
-        width: 300
-    }
+	media: {
+		width: '100%',
+	},
+	wrap: {
+		margin: '0 auto',
+		width: 700
+	},
+	hide: {
+		display: 'none',
+	},
+	show: {
+		display: 'block',
+	},
+	root: {
+		flexGrow: 1,
+	},
+	flex: {
+		flex: 1,
+	},
+	menuButton: {
+		marginLeft: -12,
+		marginRight: 20,
+	},
+	menuRoot: {
+		width: 300
+	}
 });
 
 
 const menus = [
-    {
-        path: '/',
-        menu: <Link to="/">
-            <ListItem button>
-                <ListItemIcon>
-                    <InboxIcon/>
-                </ListItemIcon>
-                <ListItemText primary="Inbox"/>
-            </ListItem>
-        </Link>
-    },
-    {
-        path: '/make',
-        menu: <Link to="/make">
-            <ListItem button>
-                <ListItemIcon>
-                    <InboxIcon/>
-                </ListItemIcon>
-                <ListItemText primary="Inbox"/>
-            </ListItem>
-        </Link>
-    }
-
-
+	{
+		path: '/',
+		menu: <Link to="/" >
+			<ListItem button>
+				<ListItemIcon>
+					<InboxIcon/>
+				</ListItemIcon>
+				<ListItemText primary="gif制作"/>
+			</ListItem>
+		</Link>
+	}
 ];
 
 class App extends React.Component {
 
-    constructor(props) {
-        super(props)
-        this.state = {
-            drawerOpen: false,
-        }
-    }
+	constructor(props) {
+		super(props)
+		this.state = {
+			drawerOpen: false,
+		}
+	}
 
-    toggleDrawer = (open) => {
-        this.setState({
-            drawerOpen: open
-        })
-    };
+	toggleDrawer = (open) => {
+		this.setState({
+			drawerOpen: open
+		})
+	};
 
-    render() {
-        const {classes} = this.props;
-        const {drawerOpen} = this.state
-        return (
-            <Router>
-                <Grid container spacing={16}>
+	render() {
+		const {classes} = this.props;
+		const {drawerOpen} = this.state
+		return (
+			<Router>
+				<Grid container spacing={16}>
 
-                    <Grid item xs={12}>
-                        <div className={classes.root}>
-                            <AppBar position="static" color="secondary">
-                                <Toolbar>
-                                    <IconButton className={classes.menuButton} color="inherit" aria-label="Menu"
-                                                onClick={() => this.toggleDrawer(true)}>
-                                        <MenuIcon/>
-                                    </IconButton>
-                                    <Typography variant="title" color="inherit" className={classes.flex}>
-                                        HappyGif
-                                    </Typography>
-                                </Toolbar>
-                            </AppBar>
-                        </div>
-                    </Grid>
+					<Grid item xs={12}>
+						<div className={classes.root}>
+							<AppBar position="static">
+								<Toolbar>
+									<IconButton className={classes.menuButton} color="inherit" aria-label="Menu"
+									            onClick={() => this.toggleDrawer(true)}>
+										<MenuIcon/>
+									</IconButton>
+									<Typography variant="title" color="inherit" className={classes.flex}>
+										Altair
+									</Typography>
+								</Toolbar>
+							</AppBar>
+						</div>
+					</Grid>
 
-                    <Drawer open={drawerOpen} onClose={() => this.toggleDrawer(false)}>
-                        <div
-                            tabIndex={0}
-                            role="button"
-                            onClick={() => this.toggleDrawer(false)}
-                            onKeyDown={() => this.toggleDrawer(false)}
-                        >
+					<Drawer open={drawerOpen} onClose={() => this.toggleDrawer(false)}>
+						<div
+							tabIndex={0}
+							role="button"
+							onClick={() => this.toggleDrawer(false)}
+							onKeyDown={() => this.toggleDrawer(false)}
+						>
 
-                            <div className={classes.menuRoot}>
-                                <List component="nav">
-                                    {
-                                        menus.map(item => item.menu)
-                                    }
-                                </List>
-                            </div>
+							<div className={classes.menuRoot}>
+								<List component="nav">
+									{
+										menus.map(item => item.menu)
+									}
+								</List>
+							</div>
 
-                        </div>
-                    </Drawer>
+						</div>
+					</Drawer>
 
-                    <Grid item xs={12}>
-                        <main className={classes.content}>
-                            <Route key='1' path='/make' exact component={gifMaker}/>
-                        </main>
-                    </Grid>
-                </Grid>
-            </Router>
-        );
-    }
+					<Grid item xs={12}>
+						<main className={classes.content}>
+							<Route key='1' path='/' exact component={gifMaker}/>
+						</main>
+					</Grid>
+				</Grid>
+			</Router>
+		);
+	}
 }
 
 export default withStyles(styles)(App);
