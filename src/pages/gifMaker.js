@@ -235,11 +235,8 @@ class Gif extends React.Component {
 						eachFrame.data = parseFrames[index - 1].data
 					}
 					parseFrames.push(eachFrame);
-					let image = context.createImageData(gif.width, gif.height);
-					eachFrame.data.map((i, index) => {
-						image.data[index] = i
-					});
-					images.push(image)
+					let imgData = new ImageData(eachFrame.data, width, height);
+					images.push(imgData)
 				}
 			});
 			this.setState({
@@ -494,8 +491,7 @@ class Gif extends React.Component {
 				<Grid item xs={12} sm={12} md={6}>
 					<div className={classes.root}>
 						{
-							_shouldShowCircularProgress ?
-								<LinearProgress color="secondary"/> : ""
+							_shouldShowCircularProgress && <LinearProgress color="secondary"/>
 						}
 					</div>
 					<Card>
