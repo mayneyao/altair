@@ -106,7 +106,6 @@ const styles = theme => ({
 	text: {
 		marginLeft: theme.spacing.unit,
 		marginRight: theme.spacing.unit,
-		width: 300,
 	}
 });
 
@@ -300,6 +299,7 @@ class Gif extends React.Component {
 
 		fr.onload = () => {
 			const decoder = new Decoder();
+			console.log(fr)
 			decoder.decode(fr.result).then(imageDataList => {
 				let firstFrame = imageDataList[0];
 				const {imageData: {width, height}} = firstFrame;
@@ -509,28 +509,21 @@ class Gif extends React.Component {
 	};
 
 	downloadFile = (outputUrl) => {
+		const {file: {name}} = this.state;
 		let a = document.createElement("a");
 		document.body.appendChild(a);
 		a.style = "display: none";
 		a.href = outputUrl;
-		a.download = 'happy';
+		a.download = `altair_${name}`;
 		a.click();
 	};
 
 	shouldShowCircularProgress = () => {
 		const {file, isFileParseDone} = this.state;
 		if (file) {
-			if (isFileParseDone) {
-				return false
-			} else {
-				return true
-			}
+			return !isFileParseDone;
 		} else {
-			if (isFileParseDone) {
-				return false
-			} else {
-				return false
-			}
+			return false
 		}
 	};
 
@@ -548,12 +541,12 @@ class Gif extends React.Component {
 		if (file) {
 			actions = [
 				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
+				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
 				{icon: <ContentCopyIcon/>, name: '复制字幕模板', action: 'exportText'},
 				{icon: <InputIcon/>, name: '导入字幕模板', action: 'importText'},
-				{icon: <DeleteIcon/>, name: '删除', action: 'init'},
-				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
-				{icon: <AddIcon/>, name: '添加字幕', action: 'addText'},
+				{icon: <DeleteIcon/>, name: '重置', action: 'init'},
 				{icon: <RemoveIcon/>, name: '删除字幕', action: 'removeText'},
+				{icon: <AddIcon/>, name: '添加字幕', action: 'addText'},
 			].concat(actions)
 		}
 
@@ -709,7 +702,9 @@ class Gif extends React.Component {
 									<Grid item xs={6} sm={6} md={6}>
 										<TextField
 											autoFocus
+											fullWidth
 											margin="dense"
+											className={classes.text}
 											id={`text-data-${index}-text`}
 											label="字幕"
 											value={text}
