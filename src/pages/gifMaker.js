@@ -1,31 +1,41 @@
 import React from 'react';
-import Button from '@material-ui/core/Button';
 import {withStyles} from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
-import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
+// import Slider from 'rc-slider';
+// import 'rc-slider/assets/index.css';
 import TextField from '@material-ui/core/TextField';
-import {GifWriter} from 'omggif'
 import GIFEncoder from '../_jsgif/GIFEncoder';
 import encode64 from '../_jsgif/b64';
-import IconButton from '@material-ui/core/IconButton';
+import Slider from '@material-ui/lab/Slider';
 import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
 import DownLoadIcon from '@material-ui/icons/FileDownload';
 import PreIcon from '@material-ui/icons/SkipPrevious';
 import NextIcon from '@material-ui/icons/SkipNext';
 import VisibilityIcon from '@material-ui/icons/Visibility';
-import BuildIcon from '@material-ui/icons/Build';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 
 import StopIcon from '@material-ui/icons/Stop';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Grid from '@material-ui/core/Grid';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+
+
+import SpeedDial from '@material-ui/lab/SpeedDial';
+import SpeedDialIcon from '@material-ui/lab/SpeedDialIcon';
+import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
+import DeleteIcon from '@material-ui/icons/Delete';
 
 import {Decoder} from 'fastgif/fastgif.js';
 
 const styles = theme => ({
+	speedDial: {
+		position: 'absolute',
+		bottom: theme.spacing.unit * 2,
+		right: theme.spacing.unit * 3,
+	},
 	progress: {
 		margin: theme.spacing.unit * 2,
 	},
@@ -56,6 +66,7 @@ const styles = theme => ({
 	},
 	root: {
 		flexGrow: 1,
+		position: 'relative'
 	},
 	flex: {
 		flex: 1,
@@ -111,10 +122,42 @@ class Gif extends React.Component {
 			isFileParseDone: false,
 			textData: [],
 			drawerOpen: false,
-			previewOpen: false,
 			genGifDone: false,
+			open: false,
+			hidden: false,
 		}
 	}
+
+	handleVisibility = () => {
+		this.setState(state => ({
+			open: false,
+			hidden: !state.hidden,
+		}));
+	};
+
+	handleClick = (action) => {
+		if (action === 'save') {
+			this.saveToGif();
+		} else if (action === 'addText') {
+			this.addText()
+		} else if (action === 'preview') {
+			this.handlePreview()
+		}
+	};
+
+	handleOpen = () => {
+		if (!this.state.hidden) {
+			this.setState({
+				open: true,
+			});
+		}
+	};
+
+	handleClose = () => {
+		this.setState({
+			open: false,
+		});
+	};
 
 	setStateAsync(state) {
 		return new Promise((resolve) => {
@@ -253,7 +296,7 @@ class Gif extends React.Component {
 		this.setState({intervalId: intervalId, play: true});
 	};
 
-	onSliderChange = (value) => {
+	onSliderChange = (e, value) => {
 		const {maxFrame, gif} = this.state;
 		if (maxFrame && gif && value < maxFrame) {
 			this.moveToFrame(value)
@@ -326,8 +369,6 @@ class Gif extends React.Component {
 		}];
 		this.setState({
 			textData: newTextData,
-			outputUrl: false,
-			perview: false
 		})
 	};
 
@@ -373,10 +414,7 @@ class Gif extends React.Component {
 		let gifUrl = 'data:image/gif;base64,' + encode64(encoder.stream().getData());
 
 		fetch(gifUrl).then(res => res.blob()).then(blob => {
-				this.setState({
-					outputUrl: URL.createObjectURL(blob),
-					genGifDone: true,
-				})
+				this.downloadFile(URL.createObjectURL(blob))
 			}
 		)
 	};
@@ -388,25 +426,14 @@ class Gif extends React.Component {
 		})
 	};
 
-	handlePreviewOpen = () => {
+	handlePreview = () => {
 		this.handleStop();
 		this.showFirstFrame();
 		this.handlePlay();
-		this.setState({
-			perview: true
-		})
 	};
 
-	handleClose = () => {
-		this.setState({
-			previewOpen: false
-		})
-	};
 	handleSave = () => {
 		this.downloadFile();
-		this.setState({
-			previewOpen: false
-		})
 	};
 	handlePreFrame = () => {
 		const {currentFrame} = this.state;
@@ -418,8 +445,7 @@ class Gif extends React.Component {
 		this.moveToFrame(currentFrame + 1)
 	};
 
-	downloadFile = () => {
-		const {outputUrl} = this.state;
+	downloadFile = (outputUrl) => {
 		let a = document.createElement("a");
 		document.body.appendChild(a);
 		a.style = "display: none";
@@ -453,7 +479,25 @@ class Gif extends React.Component {
 
 	render() {
 		const {classes} = this.props;
-		const {currentFrame, maxFrame, gif, play, textData, outputUrl} = this.state;
+		const {hidden, open, file} = this.state;
+
+		let isTouch;
+		if (typeof document !== 'undefined') {
+			isTouch = 'ontouchstart' in document.documentElement;
+		}
+
+		let actions = [];
+
+		if (file) {
+			actions = [
+				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
+				{icon: <DeleteIcon/>, name: '删除'},
+				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
+				{icon: <AddIcon/>, name: '添加字幕', action: 'addText'},
+			].concat(actions)
+		}
+
+		const {currentFrame, maxFrame, gif, play, textData} = this.state;
 		const _shouldShowCircularProgress = this.shouldShowCircularProgress();
 		return (
 			<Grid container spacing={16}>
@@ -467,8 +511,24 @@ class Gif extends React.Component {
 					</div>
 					<Card>
 						<div style={{margin: '0 auto'}}>
-							<canvas id="canvas" className={classes.media}>
-							</canvas>
+
+							<input
+								onChange={this.handleFileChange}
+								accept="image/gif"
+								className={classes.input}
+								id="raised-button-file"
+								multiple
+								type="file"
+							/>
+							{
+								file ? <canvas id="canvas" className={classes.media}>
+									</canvas>
+									: <label htmlFor="raised-button-file">
+										<canvas id="canvas" className={classes.media}>
+										</canvas>
+									</label>
+							}
+
 						</div>
 						{
 							gif ?
@@ -476,67 +536,33 @@ class Gif extends React.Component {
 									textAlign: 'center'
 								}}>
 									<Grid container spacing={24}>
-										<Grid item xs={4} sm={4} md/>
-										<Grid item xs={4} sm={4} md>
-											<Grid container>
-												<Grid item xs={4} sm={4} md={4}>
-													<IconButton onClick={this.handlePreFrame} variant="raised">
+										<Grid item xs={12} sm={12} md>
+											<div style={{margin: '0 auto'}}>
+												<ToggleButtonGroup>
+													<ToggleButton onClick={this.handlePreFrame}>
 														<PreIcon/>
-													</IconButton>
-												</Grid>
-
-												<Grid item xs={4} sm={4} md={4}>
+													</ToggleButton>
 													{
-														play ? <IconButton onClick={this.handleStop} variant="raised">
+														play ?
+															<ToggleButton onClick={this.handleStop} variant="raised">
 																<StopIcon/>
-															</IconButton> :
-															<IconButton onClick={this.handlePlay} variant="raised">
+															</ToggleButton> :
+															<ToggleButton onClick={this.handlePlay} variant="raised">
 																<PlayArrowIcon/>
-															</IconButton>
+															</ToggleButton>
 													}
-												</Grid>
-												<Grid item xs={4} sm={4} md={4}>
-													<IconButton onClick={this.handleNextFrame} variant="raised">
+													<ToggleButton onClick={this.handleNextFrame} variant="raised">
 														<NextIcon/>
-													</IconButton>
-												</Grid>
-											</Grid>
-										</Grid>
-
-										<Grid item xs={4} sm={4} md>
-											<Grid container>
-												<Grid item xs={3} sm={3} md={3}>
-													<IconButton onClick={this.addText}><AddIcon/></IconButton>
-												</Grid>
-
-												<Grid item xs={3} sm={3} md={3}>
-
-													<IconButton
-														onClick={this.handlePreviewOpen}><VisibilityIcon/></IconButton>
-												</Grid>
-												<Grid item xs={3} sm={3} md={3}>
-													<IconButton onClick={this.saveToGif} variant="raised">
-														<BuildIcon/>
-													</IconButton>
-												</Grid>
-												<Grid item xs={3} sm={3} md={3}>
-
-													{
-														outputUrl ?
-															<IconButton
-																onClick={this.downloadFile}><DownLoadIcon/></IconButton> : ''
-													}
-												</Grid>
-											</Grid>
-
-
+													</ToggleButton>
+												</ToggleButtonGroup>
+											</div>
 										</Grid>
 									</Grid>
 
 									<Slider value={currentFrame}
 									        min={0}
-									        style={{margin: '0 auto'}}
 									        max={maxFrame}
+									        step={1}
 									        onChange={this.onSliderChange}/>
 								</div>
 								: ''
@@ -625,7 +651,7 @@ class Gif extends React.Component {
 											id={`text-data-${index}-text`}
 											label="字幕"
 											value={text}
-											type="number"
+											type="text"
 											onChange={(e) => {
 												this.handleTextChange(e, index)
 											}}
@@ -634,35 +660,34 @@ class Gif extends React.Component {
 								</Grid>
 							})
 						}
-						<div>
-							<Button variant="fab" className={classes.fab} component="span" color='primary'>
-								<AddIcon/>
-							</Button>
-						</div>
 
 					</div>
 
 				</Grid>
 				<Grid item xs={12} sm={12} md/>
-				<div>
-					<div>
-						<input
-							onChange={this.handleFileChange}
-							accept="image/gif"
-							className={classes.input}
-							id="raised-button-file"
-							multiple
-							type="file"
+				<SpeedDial
+					ariaLabel="SpeedDial example"
+					className={classes.speedDial}
+					hidden={hidden}
+					icon={<SpeedDialIcon/>}
+					// onBlur={this.handleClose}
+					onClick={open ? this.handleClose : this.handleOpen}
+					// onClose={this.handleClose}
+					// onFocus={isTouch ? undefined : this.handleOpen}
+					// onMouseEnter={isTouch ? undefined : this.handleOpen}
+					// onMouseLeave={this.handleClose}
+					open={open}
+				>
+					{actions.map(action => (
+						<SpeedDialAction
+							key={action.name}
+							icon={action.icon}
+							tooltipTitle={action.name}
+							tooltipOpen
+							onClick={() => this.handleClick(action.action)}
 						/>
-						<label htmlFor="raised-button-file">
-							<Button variant="fab" className={classes.fab} component="span" color='primary'>
-								<AddIcon/>
-							</Button>
-
-						</label>
-					</div>
-
-				</div>
+					))}
+				</SpeedDial>
 				<Drawer open={this.state.drawerOpen} onClose={() => this.toggleDrawer(false)}>
 					<div
 						tabIndex={0}
