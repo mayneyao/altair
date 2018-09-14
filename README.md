@@ -38,11 +38,4 @@ yarn start
 
 + gif解析: [fastgif](https://github.com/samthor/fastgif) [omggif](https://github.com/deanm/omggif)
 
-  开始用的 `omggif` 解码然后,然后自己写帧数处理,效率太低了,后来用上`fastgif`速度快多了(`wasm`真香)
-
-
-
-
-
-
-
+  开始用的 `omggif` 解码,然后自己写帧数处理,效率太低了,后来用上`fastgif`速度快多了(`wasm`真香)
