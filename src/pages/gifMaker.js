@@ -132,7 +132,7 @@ class Gif extends React.Component {
 
 	handleImportTextData = () => {
 		const {textTemplate} = this.state;
-		let textData;
+		let textData = [];
 		try {
 			textData = JSON.parse(textTemplate);
 		} catch (error) {
