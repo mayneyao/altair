@@ -133,7 +133,7 @@ class Gif extends React.Component {
 			textData = JSON.parse(textTemplate);
 		} catch (error) {
 			alert('模板解析失败')
-		};
+		}
 		this.setState({
 			textData,
 			dialogOpen: false,
@@ -298,7 +298,6 @@ class Gif extends React.Component {
 			decoder.decode(fr.result).then(imageDataList => {
 				let firstFrame = imageDataList[0];
 				const {imageData: {width, height}} = firstFrame;
-				console.log(firstFrame);
 				canvas.setAttribute("width", width);
 				canvas.setAttribute("height", height);
 
@@ -373,11 +372,11 @@ class Gif extends React.Component {
 	};
 
 	handleEndChange = (event, index) => {
-		const end = event.target.value;
+		// fuck js
+		// why event.target.value is string
+		const end = parseInt(event.target.value);
 		const {textData} = this.state;
-
 		let newTextData = textData.slice();
-
 		let [a, z] = newTextData[index].timeDuration;
 		newTextData[index].timeDuration = [a, end];
 
@@ -425,7 +424,7 @@ class Gif extends React.Component {
 		}
 
 		let newTextData = [...textData, {
-			timeDuration: [startFrame, undefined],
+			timeDuration: [startFrame, 0],
 			text: ''
 		}];
 		this.setState({
@@ -695,9 +694,7 @@ class Gif extends React.Component {
 											value={z}
 											inputProps={endInputProps}
 											type="number"
-											onChange={(e) => {
-												this.handleEndChange(e, index)
-											}}
+											onChange={(e) => this.handleEndChange(e, index)}
 										/>
 									</Grid>
 									<Grid item xs={6} sm={6} md={6}>
