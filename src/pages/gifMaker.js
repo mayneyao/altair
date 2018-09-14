@@ -51,6 +51,9 @@ const styles = theme => ({
 	button: {
 		margin: theme.spacing.unit,
 	},
+	actionButton: {
+		width: '64px'
+	},
 	input: {
 		display: 'none',
 	},
@@ -596,19 +599,23 @@ class Gif extends React.Component {
 										<Grid item xs={12} sm={12} md>
 											<div style={{margin: '0 auto'}}>
 												<ToggleButtonGroup>
-													<ToggleButton onClick={this.handlePreFrame} value='pre'>
+													<ToggleButton onClick={this.handlePreFrame} value='pre'
+													              className={classes.actionButton}>
 														<PreIcon/>
 													</ToggleButton>
 													{
 														play ?
-															<ToggleButton onClick={this.handleStop} value='stop'>
+															<ToggleButton onClick={this.handleStop} value='stop'
+															              className={classes.actionButton}>
 																<StopIcon/>
 															</ToggleButton> :
-															<ToggleButton onClick={this.handlePlay} value='play'>
+															<ToggleButton onClick={this.handlePlay} value='play'
+															              className={classes.actionButton}>
 																<PlayArrowIcon/>
 															</ToggleButton>
 													}
-													<ToggleButton onClick={this.handleNextFrame} value='next'>
+													<ToggleButton onClick={this.handleNextFrame} value='next'
+													              className={classes.actionButton}>
 														<NextIcon/>
 													</ToggleButton>
 												</ToggleButtonGroup>
