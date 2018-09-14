@@ -1,19 +1,20 @@
 import React from 'react';
 import {withStyles} from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
-// import Slider from 'rc-slider';
-// import 'rc-slider/assets/index.css';
 import TextField from '@material-ui/core/TextField';
 import GIFEncoder from '../_jsgif/GIFEncoder';
 import encode64 from '../_jsgif/b64';
 import Slider from '@material-ui/lab/Slider';
 import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
+import RemoveIcon from '@material-ui/icons/Remove';
 import DownLoadIcon from '@material-ui/icons/FileDownload';
 import PreIcon from '@material-ui/icons/SkipPrevious';
 import NextIcon from '@material-ui/icons/SkipNext';
 import VisibilityIcon from '@material-ui/icons/Visibility';
-
+import ContentCopyIcon from '@material-ui/icons/ContentCopy';
+import InputIcon from '@material-ui/icons/Input';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
 import StopIcon from '@material-ui/icons/Stop';
@@ -28,11 +29,17 @@ import SpeedDialIcon from '@material-ui/lab/SpeedDialIcon';
 import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import DeleteIcon from '@material-ui/icons/Delete';
 
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogTitle from '@material-ui/core/DialogTitle';
+
+import copy from 'copy-to-clipboard';
 import {Decoder} from 'fastgif/fastgif.js';
 
 const styles = theme => ({
 	speedDial: {
-		position: 'absolute',
+		position: 'fixed',
 		bottom: theme.spacing.unit * 2,
 		right: theme.spacing.unit * 3,
 	},
@@ -98,50 +105,91 @@ const styles = theme => ({
 	}
 });
 
-const frameMix = (fA, fZ) => {
-	for (let i = 0; i < fA.length; i += 4) {
-		if (!(0 === fA[i] && fA[i + 1] === 0 && fA[i + 2] === 0 && fA[i + 3] === 0)) {
-			fZ[i] = fA[i];
-			fZ[i + 1] = fA[i + 1];
-			fZ[i + 2] = fA[i + 2];
-			fZ[i + 3] = fA[i + 3]
-		}
-	}
-	return fZ
-};
 
 class Gif extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
+			dialogOpen: false,
 			currentFrame: 0,
 			play: true,
 			context: null,
 			data: [],
-			speed: 80,
+			delay: 80,
 			isFileParseDone: false,
 			textData: [],
 			drawerOpen: false,
-			genGifDone: false,
 			open: false,
 			hidden: false,
+			gif: false,
+			textTemplate: '',
 		}
 	}
 
-	handleVisibility = () => {
-		this.setState(state => ({
-			open: false,
-			hidden: !state.hidden,
-		}));
+	handleImportTextData = () => {
+		const {textTemplate} = this.state;
+		let textData;
+		try {
+			textData = JSON.parse(textTemplate);
+		} catch (error) {
+			alert('模板解析失败')
+		};
+		this.setState({
+			textData,
+			dialogOpen: false,
+			textTemplate: '',
+		})
 	};
 
-	handleClick = (action) => {
-		if (action === 'save') {
-			this.saveToGif();
-		} else if (action === 'addText') {
-			this.addText()
-		} else if (action === 'preview') {
-			this.handlePreview()
+	handleTextTemplateChange = (e) => {
+		this.setState({
+			textTemplate: e.target.value,
+		})
+	};
+	handleDialogOpen = () => {
+		this.setState({dialogOpen: true});
+	};
+	handleDialogClose = () => {
+		this.setState({dialogOpen: false, textTemplate: '',});
+	};
+
+	init = () => {
+		this.setState({
+			textTemplate: '',
+			dialogOpen: false,
+			file: false,
+			currentFrame: 0,
+			play: true,
+			context: null,
+			data: [],
+			delay: 80,
+			isFileParseDone: false,
+			textData: [],
+			drawerOpen: false,
+			open: false,
+			hidden: false,
+			gif: false
+		})
+	};
+
+	handleActionClick = (action) => {
+		if (action === 'exportText') {
+			const {textData} = this.state;
+			let tmp = JSON.stringify(textData);
+			copy(tmp);
+			alert('已成功复制字幕模板\n' + tmp);
+		}
+		else {
+			let action_map = {
+				save: this.saveToGif,
+				addText: this.addText,
+				removeText: this.removeText,
+				preview: this.handlePreview,
+				init: this.init,
+				importText: this.handleDialogOpen,
+			};
+			let func = action_map[action];
+			func();
 		}
 	};
 
@@ -166,7 +214,7 @@ class Gif extends React.Component {
 	}
 
 	showFrame = (num) => {
-		const {context, gif, currentFrame, maxFrame, textData, gifInfo: {width, height}} = this.state;
+		const {context, gif, maxFrame, textData, gifInfo: {width, height}} = this.state;
 		let thisFrame = textData.filter(item => {
 			let [a, z] = item.timeDuration;
 			if (num >= a && num < z) {
@@ -231,9 +279,9 @@ class Gif extends React.Component {
 		})
 	};
 
-	handleSpeedChange = (event) => {
+	handleDelayChange = (event) => {
 		this.setState({
-			speed: event.target.value,
+			delay: event.target.value,
 			play: false,
 		});
 		clearInterval(this.state.intervalId);
@@ -250,6 +298,7 @@ class Gif extends React.Component {
 			decoder.decode(fr.result).then(imageDataList => {
 				let firstFrame = imageDataList[0];
 				const {imageData: {width, height}} = firstFrame;
+				console.log(firstFrame);
 				canvas.setAttribute("width", width);
 				canvas.setAttribute("height", height);
 
@@ -265,6 +314,9 @@ class Gif extends React.Component {
 				});
 				this.showFirstFrame()
 
+			}).catch(() => {
+				this.init();
+				alert('解析出错,请上传其它gif');
 			});
 		};
 
@@ -292,7 +344,7 @@ class Gif extends React.Component {
 	};
 
 	handlePlay = () => {
-		var intervalId = setInterval(this.changeFrame, this.state.speed);
+		let intervalId = setInterval(this.changeFrame, this.state.delay);
 		this.setState({intervalId: intervalId, play: true});
 	};
 
@@ -350,6 +402,15 @@ class Gif extends React.Component {
 		})
 	};
 
+	removeText = () => {
+		this.handleStop();
+		const {textData} = this.state;
+		textData.pop();
+		this.setState({
+			textData,
+		})
+	};
+
 	addText = () => {
 		this.handleStop();
 		const {currentFrame, textData} = this.state;
@@ -373,7 +434,7 @@ class Gif extends React.Component {
 	};
 
 	saveToGif = () => {
-		const {gifInfo: {width, height}, maxFrame, speed} = this.state;
+		const {gifInfo: {width, height}, maxFrame, delay} = this.state;
 		let canvas = document.createElement('canvas');
 		canvas.setAttribute("width", width);
 		canvas.setAttribute("height", height);
@@ -383,7 +444,7 @@ class Gif extends React.Component {
 
 		let encoder = new GIFEncoder();
 		encoder.setRepeat(0); //auto-loop
-		encoder.setDelay(speed);
+		encoder.setDelay(delay);
 		console.log(encoder.start());
 		for (let currentFrame = 0; currentFrame < maxFrame; currentFrame++) {
 			let thisFrame = textData.filter(item => {
@@ -412,13 +473,11 @@ class Gif extends React.Component {
 
 		encoder.finish();
 		let gifUrl = 'data:image/gif;base64,' + encode64(encoder.stream().getData());
-
 		fetch(gifUrl).then(res => res.blob()).then(blob => {
 				this.downloadFile(URL.createObjectURL(blob))
 			}
 		)
 	};
-
 
 	toggleDrawer = (open) => {
 		this.setState({
@@ -479,21 +538,18 @@ class Gif extends React.Component {
 
 	render() {
 		const {classes} = this.props;
-		const {hidden, open, file} = this.state;
-
-		let isTouch;
-		if (typeof document !== 'undefined') {
-			isTouch = 'ontouchstart' in document.documentElement;
-		}
-
+		const {hidden, open, file, dialogOpen, textTemplate} = this.state;
 		let actions = [];
 
 		if (file) {
 			actions = [
 				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
-				{icon: <DeleteIcon/>, name: '删除'},
+				{icon: <ContentCopyIcon/>, name: '复制字幕模板', action: 'exportText'},
+				{icon: <InputIcon/>, name: '导入字幕模板', action: 'importText'},
+				{icon: <DeleteIcon/>, name: '删除', action: 'init'},
 				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
 				{icon: <AddIcon/>, name: '添加字幕', action: 'addText'},
+				{icon: <RemoveIcon/>, name: '删除字幕', action: 'removeText'},
 			].concat(actions)
 		}
 
@@ -539,19 +595,19 @@ class Gif extends React.Component {
 										<Grid item xs={12} sm={12} md>
 											<div style={{margin: '0 auto'}}>
 												<ToggleButtonGroup>
-													<ToggleButton onClick={this.handlePreFrame}>
+													<ToggleButton onClick={this.handlePreFrame} value='pre'>
 														<PreIcon/>
 													</ToggleButton>
 													{
 														play ?
-															<ToggleButton onClick={this.handleStop} variant="raised">
+															<ToggleButton onClick={this.handleStop} value='stop'>
 																<StopIcon/>
 															</ToggleButton> :
-															<ToggleButton onClick={this.handlePlay} variant="raised">
+															<ToggleButton onClick={this.handlePlay} value='play'>
 																<PlayArrowIcon/>
 															</ToggleButton>
 													}
-													<ToggleButton onClick={this.handleNextFrame} variant="raised">
+													<ToggleButton onClick={this.handleNextFrame} value='next'>
 														<NextIcon/>
 													</ToggleButton>
 												</ToggleButtonGroup>
@@ -581,11 +637,11 @@ class Gif extends React.Component {
 							disabled={true}
 						/>
 						<TextField
-							id="speed"
-							label="speed"
+							id="delay"
+							label="delay"
 							className={classes.textField}
-							value={this.state.speed}
-							onChange={this.handleSpeedChange}
+							value={this.state.delay}
+							onChange={this.handleDelayChange}
 							type="number"
 							margin="normal"
 						/>
@@ -684,7 +740,7 @@ class Gif extends React.Component {
 							icon={action.icon}
 							tooltipTitle={action.name}
 							tooltipOpen
-							onClick={() => this.handleClick(action.action)}
+							onClick={() => this.handleActionClick(action.action)}
 						/>
 					))}
 				</SpeedDial>
@@ -697,6 +753,34 @@ class Gif extends React.Component {
 					>
 					</div>
 				</Drawer>
+				<Dialog
+					open={dialogOpen}
+					onClose={this.handleDialogClose}
+					aria-labelledby="form-dialog-title"
+				>
+					<DialogTitle id="form-dialog-title">导入字幕模板</DialogTitle>
+					<DialogContent>
+						<TextField
+							style={{width: 500}}
+							autoFocus
+							margin="dense"
+							id="textTmp"
+							label="字幕模板"
+							type="text"
+							value={textTemplate}
+							onChange={this.handleTextTemplateChange}
+							fullWidth
+						/>
+					</DialogContent>
+					<DialogActions>
+						<Button onClick={this.handleDialogClose} color="primary">
+							取消
+						</Button>
+						<Button onClick={this.handleImportTextData} color="primary">
+							导入
+						</Button>
+					</DialogActions>
+				</Dialog>
 			</Grid>
 		);
 	}

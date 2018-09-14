@@ -9,6 +9,7 @@
     "axios": "^0.18.0",
     "b64": "^4.0.0",
     "ccapture.js": "^1.0.9",
+    "copy-to-clipboard": "^3.0.8",
     "fastgif": "^0.1.1",
     "jsgif": "^1.0.2",
     "material-ui": "^1.0.0-beta.40",
