@@ -212,7 +212,7 @@ class Gif extends React.Component {
 			const decoder = new Decoder();
 			decoder.decode(fr.result).then(imageDataList => {
 				let firstFrame = imageDataList[0];
-				const {imageData: {width, height}, delay} = firstFrame;
+				const {imageData: {width, height}} = firstFrame;
 				canvas.setAttribute("width", width);
 				canvas.setAttribute("height", height);
 
@@ -227,6 +227,7 @@ class Gif extends React.Component {
 					gifInfo: {width, height},
 				});
 				this.showFirstFrame()
+
 			});
 		};
 
@@ -467,8 +468,7 @@ class Gif extends React.Component {
 				<Grid item xs={12} sm={12} md={6}>
 					<div className={classes.root}>
 						{
-							_shouldShowCircularProgress ?
-								<LinearProgress color="secondary"/> : ""
+							_shouldShowCircularProgress && <LinearProgress color="secondary"/>
 						}
 					</div>
 					<Card>
