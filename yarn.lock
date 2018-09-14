@@ -3157,6 +3157,10 @@ fast-levenshtein@~2.0.4:
   version "2.0.6"
   resolved "http://registry.npm.taobao.org/fast-levenshtein/download/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
 
+fastgif@^0.1.1:
+  version "0.1.1"
+  resolved "http://registry.npm.taobao.org/fastgif/download/fastgif-0.1.1.tgz#2ca7c49d1c353f3492ed7da14a1d06f71d4f05c4"
+
 fastparse@^1.1.1:
   version "1.1.1"
   resolved "http://registry.npm.taobao.org/fastparse/download/fastparse-1.1.1.tgz#d1e2643b38a94d7583b479060e6c4affc94071f8"

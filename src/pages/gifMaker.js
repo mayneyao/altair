@@ -29,7 +29,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogContent from '@material-ui/core/DialogContent';
 
-const GifReader = (require('omggif')).GifReader;
+import {Decoder} from 'fastgif/fastgif.js';
 
 const styles = theme => ({
 	progress: {
@@ -209,52 +209,25 @@ class Gif extends React.Component {
 		let fr = new FileReader();
 
 		fr.onload = () => {
-			let gif = new GifReader(new Uint8Array(fr.result));
-			const {width, height} = gif;
-			canvas.setAttribute("width", width);
-			canvas.setAttribute("height", height);
-			let allFrames = [];
-			const frameNums = gif.numFrames();
+			const decoder = new Decoder();
+			decoder.decode(fr.result).then(imageDataList => {
+				let firstFrame = imageDataList[0];
+				const {imageData: {width, height}, delay} = firstFrame;
+				canvas.setAttribute("width", width);
+				canvas.setAttribute("height", height);
 
-			for (let i = 0; i < frameNums; i++) {
-				let image = context.createImageData(width, height);
-				gif.decodeAndBlitFrameRGBA(i, image.data);
-				let frame = gif.frameInfo(i);
-				Object.assign(frame, image);
-
-				allFrames.push(frame)
-			}
-
-			let parseFrames = [allFrames[0]];
-			let images = [];
-			allFrames.map((eachFrame, index) => {
-				if (index < frameNums && index > 0) {
-					if (eachFrame.disposal === 1) {
-						eachFrame.data = frameMix(eachFrame.data, parseFrames[index - 1].data)
-					} else if (eachFrame.disposal === 3) {
-						eachFrame.data = parseFrames[index - 1].data
-					}
-					parseFrames.push(eachFrame);
-					let image = context.createImageData(gif.width, gif.height);
-					eachFrame.data.map((i, index) => {
-						image.data[index] = i
-					});
-					images.push(image)
-				}
+				const frameNums = imageDataList.length;
+				let images = imageDataList.map(item => item.imageData);
+				this.setState({
+					gif: images,
+					maxFrame: frameNums - 1,
+					canvas,
+					context,
+					isFileParseDone: true,
+					gifInfo: {width, height},
+				});
+				this.showFirstFrame()
 			});
-			this.setState({
-				gif: images,
-				maxFrame: frameNums - 1,
-				canvas,
-				context,
-				isFileParseDone: true,
-				gifInfo: {
-					width: gif.width,
-					height: gif.height
-				},
-				gifAllInfo: gif
-			});
-			this.showFirstFrame()
 		};
 
 		if (file) {
@@ -511,7 +484,7 @@ class Gif extends React.Component {
 									<Grid container spacing={24}>
 										<Grid item xs={4} sm={4} md/>
 										<Grid item xs={4} sm={4} md>
-											<Grid container spacing={2}>
+											<Grid container>
 												<Grid item xs={4} sm={4} md={4}>
 													<IconButton onClick={this.handlePreFrame} variant="raised">
 														<PreIcon/>
@@ -537,7 +510,7 @@ class Gif extends React.Component {
 										</Grid>
 
 										<Grid item xs={4} sm={4} md>
-											<Grid container spacing={2}>
+											<Grid container>
 												<Grid item xs={3} sm={3} md={3}>
 													<IconButton onClick={this.addText}><AddIcon/></IconButton>
 												</Grid>
