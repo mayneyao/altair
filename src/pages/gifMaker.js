@@ -17,6 +17,7 @@ import NextIcon from '@material-ui/icons/SkipNext';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import ContentCopyIcon from '@material-ui/icons/ContentCopy';
 import InputIcon from '@material-ui/icons/Input';
+import WebIcon from '@material-ui/icons/Http';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
 import StopIcon from '@material-ui/icons/Stop';
@@ -127,8 +128,16 @@ class Gif extends React.Component {
 			hidden: false,
 			gif: false,
 			textTemplate: '',
+			webImageUrl: '',
+			dialogImportWebImageOpen: false,
 		}
 	}
+
+	handleUrlChange = (e) => {
+		this.setState({
+			webImageUrl: e.target.value,
+		})
+	};
 
 	handleImportTextData = () => {
 		const {textTemplate} = this.state;
@@ -154,11 +163,12 @@ class Gif extends React.Component {
 		this.setState({dialogOpen: true});
 	};
 	handleDialogClose = () => {
-		this.setState({dialogOpen: false, textTemplate: '',});
+		this.setState({dialogOpen: false, textTemplate: '', dialogImportWebImageOpen: false, webImageUrl: ''});
 	};
 
 	init = () => {
 		this.setState({
+			dialogImportWebImageOpen: false,
 			textTemplate: '',
 			dialogOpen: false,
 			file: false,
@@ -172,7 +182,8 @@ class Gif extends React.Component {
 			drawerOpen: false,
 			open: false,
 			hidden: false,
-			gif: false
+			gif: false,
+			webImageUrl: '',
 		})
 	};
 
@@ -182,6 +193,10 @@ class Gif extends React.Component {
 			let tmp = JSON.stringify(textData);
 			copy(tmp);
 			alert('已成功复制字幕模板\n' + tmp);
+		} else if (action === 'importWebImage') {
+			this.setState({
+				dialogImportWebImageOpen: true,
+			})
 		}
 		else {
 			let action_map = {
@@ -291,33 +306,63 @@ class Gif extends React.Component {
 		clearInterval(this.state.intervalId);
 	};
 
-	parseGif = () => {
-		const {file} = this.state;
+	parseImage = (imageDataList) => {
 		let canvas = document.getElementById("canvas");
 		let context = canvas.getContext("2d");
+		let firstFrame = imageDataList[0];
+		const {imageData: {width, height}} = firstFrame;
+		canvas.setAttribute("width", width);
+		canvas.setAttribute("height", height);
+
+		const frameNums = imageDataList.length;
+		let images = imageDataList.map(item => item.imageData);
+		this.setState({
+			gif: images,
+			maxFrame: frameNums - 1,
+			canvas,
+			context,
+			isFileParseDone: true,
+			gifInfo: {width, height},
+		});
+		this.showFirstFrame()
+
+	};
+	importWebImage = () => {
+		this.handleDialogClose();
+		const {webImageUrl} = this.state;
+		const decoder = new Decoder();
+		let url;
+		try {
+			url = new URL(webImageUrl);
+		} catch (e) {
+			alert('图像链接有误');
+		}
+		let filename = url.pathname.split('/').pop();
+		this.setState({
+			file: {url: webImageUrl, name: filename},
+			isFileParseDone: false,
+		}, () => {
+			fetch(webImageUrl).catch(() => {
+				alert("图像获取失败");
+			}).then((response) => response.arrayBuffer())
+				.then((buffer) => decoder.decode(buffer))
+				.then(imageDataList => {
+					this.parseImage(imageDataList)
+				}).catch(() => {
+				this.init();
+				alert('解析出错,请上传其它gif');
+			});
+		})
+	};
+
+	parseGif = () => {
+		const {file} = this.state;
 		let fr = new FileReader();
 
 		fr.onload = () => {
 			const decoder = new Decoder();
-			console.log(fr)
 			decoder.decode(fr.result).then(imageDataList => {
-				let firstFrame = imageDataList[0];
-				const {imageData: {width, height}} = firstFrame;
-				canvas.setAttribute("width", width);
-				canvas.setAttribute("height", height);
-
-				const frameNums = imageDataList.length;
-				let images = imageDataList.map(item => item.imageData);
-				this.setState({
-					gif: images,
-					maxFrame: frameNums - 1,
-					canvas,
-					context,
-					isFileParseDone: true,
-					gifInfo: {width, height},
-				});
-				this.showFirstFrame()
-
+				this.parseImage(imageDataList)
 			}).catch(() => {
 				this.init();
 				alert('解析出错,请上传其它gif');
@@ -535,11 +580,15 @@ class Gif extends React.Component {
 
 	render() {
 		const {classes} = this.props;
-		const {hidden, open, file, dialogOpen, textTemplate} = this.state;
-		let actions = [];
+		const {
+			hidden, open, file, dialogOpen, textTemplate, currentFrame, maxFrame, gif, play,
+			textData, webImageUrl, dialogImportWebImageOpen, isFileParseDone
+		} = this.state;
 
-		if (file) {
-			actions = [
+		let actions = [{icon: <WebIcon/>, name: '导入网络图片', action: 'importWebImage'},];
+
+		if (isFileParseDone) {
+			actions = actions.concat([
 				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
 				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
 				{icon: <ContentCopyIcon/>, name: '复制字幕模板', action: 'exportText'},
@@ -547,10 +596,9 @@ class Gif extends React.Component {
 				{icon: <DeleteIcon/>, name: '重置', action: 'init'},
 				{icon: <RemoveIcon/>, name: '删除字幕', action: 'removeText'},
 				{icon: <AddIcon/>, name: '添加字幕', action: 'addText'},
-			].concat(actions)
+			])
 		}
 
-		const {currentFrame, maxFrame, gif, play, textData} = this.state;
 		const _shouldShowCircularProgress = this.shouldShowCircularProgress();
 		return (
 			<Grid container spacing={16}>
@@ -626,7 +674,6 @@ class Gif extends React.Component {
 						}
 
 					</Card>
-
 					<div>
 						<TextField
 							id="frame"
@@ -647,7 +694,6 @@ class Gif extends React.Component {
 							margin="normal"
 						/>
 					</div>
-
 					<div style={{padding: 20}}>
 						{
 							textData.map((data, index) => {
@@ -754,6 +800,7 @@ class Gif extends React.Component {
 					>
 					</div>
 				</Drawer>
+
 				<Dialog
 					open={dialogOpen}
 					onClose={this.handleDialogClose}
@@ -780,6 +827,33 @@ class Gif extends React.Component {
 						<Button onClick={this.handleImportTextData} color="primary">
 							导入
 						</Button>
+					</DialogActions>
+				</Dialog>
+
+
+				<Dialog
+					open={dialogImportWebImageOpen}
+					onClose={this.handleDialogClose}
+					aria-labelledby="form-dialog-title"
+				>
+					<DialogTitle id="form-dialog-title">导入网络图片</DialogTitle>
+					<DialogContent>
+						<TextField
+							style={{width: 500}}
+							autoFocus
+							margin="dense"
+							id="webImageUrl"
+							label="图片URL"
+							type="text"
+							value={webImageUrl}
+							onChange={this.handleUrlChange}
+						/>
+					</DialogContent>
+					<DialogActions>
+						<Button onClick={this.handleDialogClose} color="primary">
+							取消
+						</Button>
+						<Button onClick={this.importWebImage} disabled={_shouldShowCircularProgress}>确定</Button>
 					</DialogActions>
 				</Dialog>
 			</Grid>
