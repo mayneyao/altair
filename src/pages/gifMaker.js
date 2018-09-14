@@ -12,22 +12,16 @@ import IconButton from '@material-ui/core/IconButton';
 import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
 import DownLoadIcon from '@material-ui/icons/FileDownload';
-import SaveIcon from '@material-ui/icons/Save';
 import PreIcon from '@material-ui/icons/SkipPrevious';
 import NextIcon from '@material-ui/icons/SkipNext';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import BuildIcon from '@material-ui/icons/Build';
-import CircularProgress from '@material-ui/core/CircularProgress';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 
 import StopIcon from '@material-ui/icons/Stop';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Grid from '@material-ui/core/Grid';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogContent from '@material-ui/core/DialogContent';
 
 import {Decoder} from 'fastgif/fastgif.js';
 
@@ -459,7 +453,7 @@ class Gif extends React.Component {
 
 	render() {
 		const {classes} = this.props;
-		const {currentFrame, maxFrame, gif, play, textData, genGifDone, newFileUrl, outputUrl} = this.state;
+		const {currentFrame, maxFrame, gif, play, textData, outputUrl} = this.state;
 		const _shouldShowCircularProgress = this.shouldShowCircularProgress();
 		return (
 			<Grid container spacing={16}>
@@ -468,7 +462,7 @@ class Gif extends React.Component {
 				<Grid item xs={12} sm={12} md={6}>
 					<div className={classes.root}>
 						{
-							_shouldShowCircularProgress && <LinearProgress color="secondary"/>
+							_shouldShowCircularProgress && <LinearProgress color="primary"/>
 						}
 					</div>
 					<Card>
@@ -584,31 +578,8 @@ class Gif extends React.Component {
 									min: 0,
 									max: maxFrame - 1
 								};
-								// let min, max,startInputProps,endInputProps;
-								// if (index === 0) {
-								//     startInputProps = {
-								//         min: 0,
-								//         max: maxFrame - 1
-								//     };
-								//     endInputProps = {
-								//         min: a,
-								//         max: maxFrame - 1
-								//     };
-								//
-								// } else {
-								//     [min, max] = textData[index - 1].timeDuration
-								//     startInputProps = {
-								//         min: max+1,
-								//         max: maxFrame - 1
-								//     };
-								//     endInputProps = {
-								//         min: a,
-								//         max: maxFrame - 1
-								//     };
-								// }
 
-
-								return <Grid container spacing={12}>
+								return <Grid container spacing={16} key={`text-${index}`}>
 									<Grid item xs={1} sm={1} md={1}>
                                         <span style={{
 	                                        fontSize: '2em',
@@ -654,17 +625,12 @@ class Gif extends React.Component {
 											id={`text-data-${index}-text`}
 											label="字幕"
 											value={text}
-											type="text"
+											type="number"
 											onChange={(e) => {
 												this.handleTextChange(e, index)
 											}}
 										/>
 									</Grid>
-									{/*<Grid item xs={1} sm={1} md={1}>*/}
-									{/*<IconButton onClick={() => {*/}
-									{/*this.playPartOfFrames(a, z)*/}
-									{/*}}><VisibilityIcon/></IconButton>*/}
-									{/*</Grid>*/}
 								</Grid>
 							})
 						}
@@ -676,35 +642,6 @@ class Gif extends React.Component {
 
 					</div>
 
-					<Dialog
-						open={this.state.previewOpen}
-						onClose={this.handleClose}
-						aria-labelledby="alert-dialog-title"
-						aria-describedby="alert-dialog-description"
-					>
-
-						{
-							genGifDone ? <div>
-								<DialogContent>
-									<DialogContentText id="alert-dialog-description">
-										<img src={newFileUrl} style={{
-											width: '100%'
-										}}/>
-									</DialogContentText>
-								</DialogContent>
-								<DialogActions>
-									<Button onClick={this.handleClose} color="primary">
-										取消
-									</Button>
-									<Button onClick={this.handleSave} color="primary" autoFocus>
-										<SaveIcon/>保存
-									</Button>
-								</DialogActions>
-							</div> : <CircularProgress className={classes.progress} color="secondary"/>
-						}
-
-
-					</Dialog>
 				</Grid>
 				<Grid item xs={12} sm={12} md/>
 				<div>
