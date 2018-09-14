@@ -5,6 +5,8 @@ import Card from '@material-ui/core/Card';
 import TextField from '@material-ui/core/TextField';
 import GIFEncoder from '../_jsgif/GIFEncoder';
 import encode64 from '../_jsgif/b64';
+import {Decoder} from '../_jsgif/fastgif';
+
 import Slider from '@material-ui/lab/Slider';
 import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
@@ -35,7 +37,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 import copy from 'copy-to-clipboard';
-import {Decoder} from 'fastgif/fastgif.js';
+
 
 const styles = theme => ({
 	speedDial: {
