@@ -22,6 +22,7 @@ yarn start
 + ~~导入网络图片~~
 + 字幕顺序调整(拖动)
 + 自定义字幕位置和样式
++ canvas resize 屏幕适配
 + 模板发布(添加后端)
 + 优化canvas转gif
 
