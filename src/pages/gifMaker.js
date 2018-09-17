@@ -147,6 +147,7 @@ class Gif extends React.Component {
 			uploadImageUrl: '',
 			dialogImportWebImageOpen: false,
 			showProcess: false,
+			imgFile: undefined,
 		}
 	}
 
@@ -208,9 +209,9 @@ class Gif extends React.Component {
 	};
 
 	uploadImage = () => {
-		const {file} = this.state;
+		const {imgFile} = this.state;
 		let formData = new FormData();
-		formData.append('smfile', file);
+		formData.append('smfile', imgFile);
 
 		axios.post('https://sm.ms/api/upload', formData, {
 			headers: {
@@ -239,12 +240,12 @@ class Gif extends React.Component {
 	};
 
 	uploadTemplate = () => {
-		const {webImageUrl, textData} = this.state;
+		const {webImageUrl, textData, imgFile} = this.state;
 		let url;
-		if (webImageUrl && webImageUrl.length) {
-			url = webImageUrl
-		} else {
+		if (imgFile) {
 			url = this.uploadImage();
+		} else {
+			url = webImageUrl
 		}
 		// 创建模板记录
 		let tmp = JSON.stringify(textData);
@@ -446,6 +447,7 @@ class Gif extends React.Component {
 			this.setState({
 				file,
 				isFileParseDone: false,
+				imgFile: file
 			}, () => {
 				this.parseGif()
 			})
