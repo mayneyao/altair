@@ -36,8 +36,7 @@ class TitlebarGridList extends React.Component {
 	}
 
 	componentDidMount() {
-		axios.get('http://127.0.0.1:8000/gif/tmp/').then(res => {
-			console.log(res.data)
+		axios.get('https://gine.me/gif/tmp/').then(res => {
 			this.setState({
 				tileData: res.data
 			})
