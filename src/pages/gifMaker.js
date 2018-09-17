@@ -601,8 +601,8 @@ class Gif extends React.Component {
 					this.importWebImage();
 					this.handleImportTextData()
 				})
-			})
-			location.replace("https://altair.gine.me/#/")
+			});
+			window.location.replace("https://altair.gine.me/#/")
 		}
 	}
 
