@@ -10,6 +10,7 @@ import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
 import DownLoadIcon from '@material-ui/icons/FileDownload';
+import UploadIcon from '@material-ui/icons/CloudUpload';
 import PreIcon from '@material-ui/icons/SkipPrevious';
 import NextIcon from '@material-ui/icons/SkipNext';
 import VisibilityIcon from '@material-ui/icons/Visibility';
@@ -143,6 +144,7 @@ class Gif extends React.Component {
 			gif: false,
 			textTemplate: '',
 			webImageUrl: '',
+			uploadImageUrl: '',
 			dialogImportWebImageOpen: false,
 			showProcess: false,
 		}
@@ -199,9 +201,54 @@ class Gif extends React.Component {
 			hidden: false,
 			gif: false,
 			webImageUrl: '',
+			uploadImageUrl: '',
 			showProcess: false,
 		});
 		window.location.replace("https://altair.gine.me/#/")
+	};
+
+	uploadImage = () => {
+		const {file} = this.state;
+		let formData = new FormData();
+		formData.append('smfile', file);
+
+		axios.post('https://sm.ms/api/upload', formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data'
+			}
+		}).then(res => {
+			this.setState({
+				uploadImageUrl: res.url
+			})
+		})
+	};
+
+	createTemplate = (imgUrl, captionTemplate) => {
+		axios.post('https://gine.me/gif/tmp/', {
+			'img_url': imgUrl,
+			'caption_template': captionTemplate
+		}).then(res => {
+			if (res.status === 201) {
+				this.setState({
+					uploadTemplateDone: true
+				})
+			}
+			console.log(res)
+			return res.url
+		})
+	};
+
+	uploadTemplate = () => {
+		const {webImageUrl, textData} = this.state;
+		let url;
+		if (webImageUrl && webImageUrl.length) {
+			url = webImageUrl
+		} else {
+			url = this.uploadImage();
+		}
+		// 创建模板记录
+		let tmp = JSON.stringify(textData);
+		this.createTemplate(url, tmp);
 	};
 
 	handleActionClick = (action) => {
@@ -223,6 +270,7 @@ class Gif extends React.Component {
 				preview: this.handlePreview,
 				init: this.init,
 				importText: this.handleDialogOpen,
+				upload: this.uploadTemplate,
 			};
 			let func = action_map[action];
 			func();
@@ -618,6 +666,7 @@ class Gif extends React.Component {
 
 		if (isFileParseDone) {
 			actions = actions.concat([
+				{icon: <UploadIcon/>, name: '上传模板', action: 'upload'},
 				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
 				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
 				{icon: <ContentCopyIcon/>, name: '复制字幕模板', action: 'exportText'},
