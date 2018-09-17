@@ -48,9 +48,9 @@ const downloadFile = (outputUrl, name) => {
 };
 
 const styles = theme => ({
-	process: {
-		position: 'fixed',
-		bottom: 0,
+	upload: {
+		width: '100%',
+		border: 'dashed 2px #aaa',
 	},
 	speedDial: {
 		position: 'fixed',
@@ -635,7 +635,7 @@ class Gif extends React.Component {
 									file ? <canvas id="canvas" className={classes.media}>
 										</canvas>
 										: <label htmlFor="raised-button-file">
-											<canvas id="canvas" className={classes.media}>
+											<canvas id="canvas" className={classes.upload}>
 											</canvas>
 										</label>
 								}
