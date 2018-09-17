@@ -148,6 +148,7 @@ class Gif extends React.Component {
 			dialogImportWebImageOpen: false,
 			showProcess: false,
 			imgFile: undefined,
+			uploadTemplateDone: false
 		}
 	}
 
@@ -204,6 +205,7 @@ class Gif extends React.Component {
 			webImageUrl: '',
 			uploadImageUrl: '',
 			showProcess: false,
+			uploadTemplateDone: false
 		});
 		window.location.replace("https://altair.gine.me/#/")
 	};
@@ -658,14 +660,13 @@ class Gif extends React.Component {
 		const {classes} = this.props;
 		const {
 			hidden, open, file, dialogOpen, textTemplate, currentFrame, maxFrame, gif, play,
-			textData, webImageUrl, dialogImportWebImageOpen, isFileParseDone, showProcess
+			textData, webImageUrl, dialogImportWebImageOpen, isFileParseDone, showProcess, uploadTemplateDone
 		} = this.state;
 
 		let actions = [{icon: <WebIcon/>, name: '导入网络图片', action: 'importWebImage'},];
 
 		if (isFileParseDone) {
 			actions = actions.concat([
-				{icon: <UploadIcon/>, name: '上传模板', action: 'upload'},
 				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
 				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
 				{icon: <ContentCopyIcon/>, name: '复制字幕模板', action: 'exportText'},
@@ -674,6 +675,9 @@ class Gif extends React.Component {
 				{icon: <RemoveIcon/>, name: '删除字幕', action: 'removeText'},
 				{icon: <AddIcon/>, name: '添加字幕', action: 'addText'},
 			])
+		}
+		if (!uploadTemplateDone) {
+			actions = actions.concat([{icon: <UploadIcon/>, name: '上传模板', action: 'upload'},])
 		}
 
 		const _shouldShowCircularProgress = this.shouldShowCircularProgress();

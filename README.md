@@ -41,6 +41,10 @@ yarn start
 
   开始用的 `omggif` 解码,然后自己写帧数处理,效率太低了,后来用上`fastgif`速度快多了(`wasm`真香)
 
++ 图床：[sm.ms](https://sm.ms/)
+
 # 更新记录
 
-2018-09-17: canvas转gif，`jsgif`=>`gif.js`
++ 2018-09-17
+    + canvas转gif，`jsgif`=>`gif.js`
+    + 模板列表&上传
