@@ -52,7 +52,7 @@ const styles = theme => ({
 const menus = [
 	{
 		path: '/',
-		menu: <Link to="/" >
+		menu: <Link to="/" key='1'>
 			<ListItem button>
 				<ListItemIcon>
 					<InboxIcon/>

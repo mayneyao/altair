@@ -3,9 +3,7 @@ import {withStyles} from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import TextField from '@material-ui/core/TextField';
-import GIFEncoder from '../_jsgif/GIFEncoder';
-import encode64 from '../_jsgif/b64';
-import {Decoder} from '../_jsgif/fastgif';
+import {Decoder} from '../fastgif/fastgif';
 
 import Slider from '@material-ui/lab/Slider';
 import Drawer from '@material-ui/core/Drawer';
@@ -40,7 +38,20 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import copy from 'copy-to-clipboard';
 
 
+const downloadFile = (outputUrl, name) => {
+	let a = document.createElement("a");
+	document.body.appendChild(a);
+	a.style = "display: none";
+	a.href = outputUrl;
+	a.download = `altair_${name}`;
+	a.click();
+};
+
 const styles = theme => ({
+	process: {
+		position: 'fixed',
+		bottom: 0,
+	},
 	speedDial: {
 		position: 'fixed',
 		bottom: theme.spacing.unit * 2,
@@ -130,6 +141,7 @@ class Gif extends React.Component {
 			textTemplate: '',
 			webImageUrl: '',
 			dialogImportWebImageOpen: false,
+			showProcess: false,
 		}
 	}
 
@@ -184,6 +196,7 @@ class Gif extends React.Component {
 			hidden: false,
 			gif: false,
 			webImageUrl: '',
+			showProcess: false,
 		})
 	};
 
@@ -247,16 +260,16 @@ class Gif extends React.Component {
 			context.putImageData(gif[num], 0, 0)
 		}
 
-		if (thisFrame.length > 0) {
-			const startPx = parseInt(width / 2);
-			context.font = '20px serif';
-			context.textAlign = 'center';
-			context.textBaseline = 'bottom';
-			context.fillStyle = "#fff";
-			context.strokeText(thisFrame[0].text, startPx, height, width);
-			context.fillText(thisFrame[0].text, startPx, height, width)
-
+		if (thisFrame.length <= 0) {
+			return;
 		}
+		const startPx = parseInt(width / 2, 10);
+		context.font = '20px serif';
+		context.textAlign = 'center';
+		context.textBaseline = 'bottom';
+		context.fillStyle = "#fff";
+		context.strokeText(thisFrame[0].text, startPx, height, width);
+		context.fillText(thisFrame[0].text, startPx, height, width)
 	};
 
 	moveToFrame = (num) => {
@@ -483,33 +496,32 @@ class Gif extends React.Component {
 	};
 
 	saveToGif = () => {
-		const {gifInfo: {width, height}, maxFrame, delay} = this.state;
+		const {gifInfo: {width, height}, maxFrame, delay, file: {name}} = this.state;
 		let canvas = document.createElement('canvas');
 		canvas.setAttribute("width", width);
 		canvas.setAttribute("height", height);
-
 		let context = canvas.getContext("2d");
 		const {gif, textData} = this.state;
 
-		let encoder = new GIFEncoder();
-		encoder.setRepeat(0); //auto-loop
-		encoder.setDelay(delay);
-		console.log(encoder.start());
+		// gif.js canvas 2 gif
+		let gifMaker = new window.GIF({
+			workers: 2,
+			quality: 10,
+			width,
+			height,
+		});
+
 		for (let currentFrame = 0; currentFrame < maxFrame; currentFrame++) {
 			let thisFrame = textData.filter(item => {
 				let [a, z] = item.timeDuration;
-				if (currentFrame >= a && currentFrame < z) {
-					return true
-				} else {
-					return false
-				}
+				return currentFrame >= a && currentFrame < z;
 			});
 
 			if (currentFrame >= 0 && currentFrame < maxFrame) {
 				context.putImageData(gif[currentFrame], 0, 0)
 			}
 			if (thisFrame.length > 0) {
-				const startPx = parseInt(width / 2);
+				const startPx = parseInt(width / 2, 10);
 				context.font = '20px serif';
 				context.textAlign = 'center';
 				context.textBaseline = 'bottom';
@@ -517,15 +529,23 @@ class Gif extends React.Component {
 				context.strokeText(thisFrame[0].text, startPx, height, width);
 				context.fillText(thisFrame[0].text, startPx, height, width)
 			}
-			encoder.addFrame(context);
+			gifMaker.addFrame(context, {delay: delay, copy: true});
+
 		}
 
-		encoder.finish();
-		let gifUrl = 'data:image/gif;base64,' + encode64(encoder.stream().getData());
-		fetch(gifUrl).then(res => res.blob()).then(blob => {
-				this.downloadFile(URL.createObjectURL(blob))
+		let react = this;
+
+		gifMaker.on('progress', function (a) {
+			if (a >= 1) {
+				react.setState({showProcess: false})
 			}
-		)
+		});
+		gifMaker.on('finished', function (blob) {
+			downloadFile(URL.createObjectURL(blob), name);
+		});
+		react.setState({showProcess: true}, () => {
+			gifMaker.render();
+		});
 	};
 
 	toggleDrawer = (open) => {
@@ -540,9 +560,6 @@ class Gif extends React.Component {
 		this.handlePlay();
 	};
 
-	handleSave = () => {
-		this.downloadFile();
-	};
 	handlePreFrame = () => {
 		const {currentFrame} = this.state;
 		this.moveToFrame(currentFrame - 1)
@@ -551,16 +568,6 @@ class Gif extends React.Component {
 	handleNextFrame = () => {
 		const {currentFrame} = this.state;
 		this.moveToFrame(currentFrame + 1)
-	};
-
-	downloadFile = (outputUrl) => {
-		const {file: {name}} = this.state;
-		let a = document.createElement("a");
-		document.body.appendChild(a);
-		a.style = "display: none";
-		a.href = outputUrl;
-		a.download = `altair_${name}`;
-		a.click();
 	};
 
 	shouldShowCircularProgress = () => {
@@ -582,7 +589,7 @@ class Gif extends React.Component {
 		const {classes} = this.props;
 		const {
 			hidden, open, file, dialogOpen, textTemplate, currentFrame, maxFrame, gif, play,
-			textData, webImageUrl, dialogImportWebImageOpen, isFileParseDone
+			textData, webImageUrl, dialogImportWebImageOpen, isFileParseDone, showProcess
 		} = this.state;
 
 		let actions = [{icon: <WebIcon/>, name: '导入网络图片', action: 'importWebImage'},];
@@ -601,262 +608,266 @@ class Gif extends React.Component {
 
 		const _shouldShowCircularProgress = this.shouldShowCircularProgress();
 		return (
-			<Grid container spacing={16}>
-
-				<Grid item xs={12} sm={12} md/>
-				<Grid item xs={12} sm={12} md={6}>
-					<div className={classes.root}>
-						{
-							_shouldShowCircularProgress && <LinearProgress color="primary"/>
-						}
-					</div>
-					<Card>
-						<div style={{margin: '0 auto'}}>
-
-							<input
-								onChange={this.handleFileChange}
-								accept="image/gif"
-								className={classes.input}
-								id="raised-button-file"
-								multiple
-								type="file"
-							/>
+			<div>
+				<Grid container spacing={16}>
+					<Grid item xs={12} sm={12} md/>
+					<Grid item xs={12} sm={12} md={6}>
+						<div className={classes.root}>
 							{
-								file ? <canvas id="canvas" className={classes.media}>
-									</canvas>
-									: <label htmlFor="raised-button-file">
-										<canvas id="canvas" className={classes.media}>
+								showProcess && <LinearProgress color="primary"/>
+							}
+							{
+								_shouldShowCircularProgress && <LinearProgress color="primary"/>
+							}
+						</div>
+						<Card>
+							<div style={{margin: '0 auto'}}>
+
+								<input
+									onChange={this.handleFileChange}
+									accept="image/gif"
+									className={classes.input}
+									id="raised-button-file"
+									multiple
+									type="file"
+								/>
+								{
+									file ? <canvas id="canvas" className={classes.media}>
 										</canvas>
-									</label>
+										: <label htmlFor="raised-button-file">
+											<canvas id="canvas" className={classes.media}>
+											</canvas>
+										</label>
+								}
+
+							</div>
+							{
+								gif ?
+									<div style={{
+										textAlign: 'center'
+									}}>
+										<Grid container spacing={24}>
+											<Grid item xs={12} sm={12} md>
+												<div style={{margin: '0 auto'}}>
+													<ToggleButtonGroup>
+														<ToggleButton onClick={this.handlePreFrame} value='pre'
+														              className={classes.actionButton}>
+															<PreIcon/>
+														</ToggleButton>
+														{
+															play ?
+																<ToggleButton onClick={this.handleStop} value='stop'
+																              className={classes.actionButton}>
+																	<StopIcon/>
+																</ToggleButton> :
+																<ToggleButton onClick={this.handlePlay} value='play'
+																              className={classes.actionButton}>
+																	<PlayArrowIcon/>
+																</ToggleButton>
+														}
+														<ToggleButton onClick={this.handleNextFrame} value='next'
+														              className={classes.actionButton}>
+															<NextIcon/>
+														</ToggleButton>
+													</ToggleButtonGroup>
+												</div>
+											</Grid>
+										</Grid>
+
+										<Slider value={currentFrame}
+										        min={0}
+										        max={maxFrame}
+										        step={1}
+										        onChange={this.onSliderChange}/>
+									</div>
+									: ''
 							}
 
+						</Card>
+						<div>
+							<TextField
+								id="frame"
+								label="frame"
+								className={classes.textField}
+								value={this.state.currentFrame}
+								type="number"
+								margin="normal"
+								disabled={true}
+							/>
+							<TextField
+								id="delay"
+								label="delay"
+								className={classes.textField}
+								value={this.state.delay}
+								onChange={this.handleDelayChange}
+								type="number"
+								margin="normal"
+							/>
 						</div>
-						{
-							gif ?
-								<div style={{
-									textAlign: 'center'
-								}}>
-									<Grid container spacing={24}>
-										<Grid item xs={12} sm={12} md>
-											<div style={{margin: '0 auto'}}>
-												<ToggleButtonGroup>
-													<ToggleButton onClick={this.handlePreFrame} value='pre'
-													              className={classes.actionButton}>
-														<PreIcon/>
-													</ToggleButton>
-													{
-														play ?
-															<ToggleButton onClick={this.handleStop} value='stop'
-															              className={classes.actionButton}>
-																<StopIcon/>
-															</ToggleButton> :
-															<ToggleButton onClick={this.handlePlay} value='play'
-															              className={classes.actionButton}>
-																<PlayArrowIcon/>
-															</ToggleButton>
-													}
-													<ToggleButton onClick={this.handleNextFrame} value='next'
-													              className={classes.actionButton}>
-														<NextIcon/>
-													</ToggleButton>
-												</ToggleButtonGroup>
-											</div>
-										</Grid>
-									</Grid>
+						<div style={{padding: 20}}>
+							{
+								textData.map((data, index) => {
+									let [a, z] = data.timeDuration;
+									let text = data.text;
+									let startInputProps = {
+										min: 0,
+										max: maxFrame - 1
+									};
+									let endInputProps = {
+										min: 0,
+										max: maxFrame - 1
+									};
 
-									<Slider value={currentFrame}
-									        min={0}
-									        max={maxFrame}
-									        step={1}
-									        onChange={this.onSliderChange}/>
-								</div>
-								: ''
-						}
-
-					</Card>
-					<div>
-						<TextField
-							id="frame"
-							label="frame"
-							className={classes.textField}
-							value={this.state.currentFrame}
-							type="number"
-							margin="normal"
-							disabled={true}
-						/>
-						<TextField
-							id="delay"
-							label="delay"
-							className={classes.textField}
-							value={this.state.delay}
-							onChange={this.handleDelayChange}
-							type="number"
-							margin="normal"
-						/>
-					</div>
-					<div style={{padding: 20}}>
-						{
-							textData.map((data, index) => {
-								let [a, z] = data.timeDuration;
-								let text = data.text;
-								let startInputProps = {
-									min: 0,
-									max: maxFrame - 1
-								};
-								let endInputProps = {
-									min: 0,
-									max: maxFrame - 1
-								};
-
-								return <Grid container spacing={16} key={`text-${index}`}>
-									<Grid item xs={1} sm={1} md={1}>
+									return <Grid container spacing={16} key={`text-${index}`}>
+										<Grid item xs={1} sm={1} md={1}>
                                         <span style={{
 	                                        fontSize: '2em',
-	                                        fontweight: 500
+	                                        fontWeight: 500
                                         }}>
                                             {
 	                                            index
                                             }
                                         </span>
+										</Grid>
+										<Grid item xs={2} sm={2} md={2}>
+											<TextField
+												autoFocus
+												className={classes.start}
+												margin="dense"
+												id={`text-data-${index}-start`}
+												label="开始"
+												type="number"
+												inputProps={startInputProps}
+												value={a}
+												onChange={(e) => this.handleStartChange(e, index)}
+											/>
+										</Grid>
+										<Grid item xs={2} sm={2} md={2}>
+											<TextField
+												autoFocus
+												className={classes.end}
+												margin="dense"
+												id={`text-data-${index}-end`}
+												label="结束"
+												value={z}
+												inputProps={endInputProps}
+												type="number"
+												onChange={(e) => this.handleEndChange(e, index)}
+											/>
+										</Grid>
+										<Grid item xs={6} sm={6} md={6}>
+											<TextField
+												autoFocus
+												fullWidth
+												margin="dense"
+												className={classes.text}
+												id={`text-data-${index}-text`}
+												label="字幕"
+												value={text}
+												type="text"
+												onChange={(e) => {
+													this.handleTextChange(e, index)
+												}}
+											/>
+										</Grid>
 									</Grid>
-									<Grid item xs={2} sm={2} md={2}>
-										<TextField
-											autoFocus
-											className={classes.start}
-											margin="dense"
-											id={`text-data-${index}-start`}
-											label="开始"
-											type="number"
-											inputProps={startInputProps}
-											value={a}
-											onChange={(e) => this.handleStartChange(e, index)}
-										/>
-									</Grid>
-									<Grid item xs={2} sm={2} md={2}>
-										<TextField
-											autoFocus
-											className={classes.end}
-											margin="dense"
-											id={`text-data-${index}-end`}
-											label="结束"
-											value={z}
-											inputProps={endInputProps}
-											type="number"
-											onChange={(e) => this.handleEndChange(e, index)}
-										/>
-									</Grid>
-									<Grid item xs={6} sm={6} md={6}>
-										<TextField
-											autoFocus
-											fullWidth
-											margin="dense"
-											className={classes.text}
-											id={`text-data-${index}-text`}
-											label="字幕"
-											value={text}
-											type="text"
-											onChange={(e) => {
-												this.handleTextChange(e, index)
-											}}
-										/>
-									</Grid>
-								</Grid>
-							})
-						}
+								})
+							}
 
-					</div>
+						</div>
 
-				</Grid>
-				<Grid item xs={12} sm={12} md/>
-				<SpeedDial
-					ariaLabel="SpeedDial example"
-					className={classes.speedDial}
-					hidden={hidden}
-					icon={<SpeedDialIcon/>}
-					// onBlur={this.handleClose}
-					onClick={open ? this.handleClose : this.handleOpen}
-					// onClose={this.handleClose}
-					// onFocus={isTouch ? undefined : this.handleOpen}
-					// onMouseEnter={isTouch ? undefined : this.handleOpen}
-					// onMouseLeave={this.handleClose}
-					open={open}
-				>
-					{actions.map(action => (
-						<SpeedDialAction
-							key={action.name}
-							icon={action.icon}
-							tooltipTitle={action.name}
-							tooltipOpen
-							onClick={() => this.handleActionClick(action.action)}
-						/>
-					))}
-				</SpeedDial>
-				<Drawer open={this.state.drawerOpen} onClose={() => this.toggleDrawer(false)}>
-					<div
-						tabIndex={0}
-						role="button"
-						onClick={() => this.toggleDrawer(false)}
-						onKeyDown={() => this.toggleDrawer(false)}
+					</Grid>
+					<Grid item xs={12} sm={12} md/>
+					<SpeedDial
+						ariaLabel="SpeedDial example"
+						className={classes.speedDial}
+						hidden={hidden}
+						icon={<SpeedDialIcon/>}
+						// onBlur={this.handleClose}
+						onClick={open ? this.handleClose : this.handleOpen}
+						// onClose={this.handleClose}
+						// onFocus={isTouch ? undefined : this.handleOpen}
+						// onMouseEnter={isTouch ? undefined : this.handleOpen}
+						// onMouseLeave={this.handleClose}
+						open={open}
 					>
-					</div>
-				</Drawer>
+						{actions.map(action => (
+							<SpeedDialAction
+								key={action.name}
+								icon={action.icon}
+								tooltipTitle={action.name}
+								tooltipOpen
+								onClick={() => this.handleActionClick(action.action)}
+							/>
+						))}
+					</SpeedDial>
+					<Drawer open={this.state.drawerOpen} onClose={() => this.toggleDrawer(false)}>
+						<div
+							tabIndex={0}
+							role="button"
+							onClick={() => this.toggleDrawer(false)}
+							onKeyDown={() => this.toggleDrawer(false)}
+						>
+						</div>
+					</Drawer>
 
-				<Dialog
-					open={dialogOpen}
-					onClose={this.handleDialogClose}
-					aria-labelledby="form-dialog-title"
-				>
-					<DialogTitle id="form-dialog-title">导入字幕模板</DialogTitle>
-					<DialogContent>
-						<TextField
-							style={{width: 500}}
-							autoFocus
-							margin="dense"
-							id="textTmp"
-							label="字幕模板"
-							type="text"
-							value={textTemplate}
-							onChange={this.handleTextTemplateChange}
-							fullWidth
-						/>
-					</DialogContent>
-					<DialogActions>
-						<Button onClick={this.handleDialogClose} color="primary">
-							取消
-						</Button>
-						<Button onClick={this.handleImportTextData} color="primary">
-							导入
-						</Button>
-					</DialogActions>
-				</Dialog>
+					<Dialog
+						open={dialogOpen}
+						onClose={this.handleDialogClose}
+						aria-labelledby="form-dialog-title"
+					>
+						<DialogTitle id="form-dialog-title">导入字幕模板</DialogTitle>
+						<DialogContent>
+							<TextField
+								style={{width: 500}}
+								autoFocus
+								margin="dense"
+								id="textTmp"
+								label="字幕模板"
+								type="text"
+								value={textTemplate}
+								onChange={this.handleTextTemplateChange}
+								fullWidth
+							/>
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={this.handleDialogClose} color="primary">
+								取消
+							</Button>
+							<Button onClick={this.handleImportTextData} color="primary">
+								导入
+							</Button>
+						</DialogActions>
+					</Dialog>
 
 
-				<Dialog
-					open={dialogImportWebImageOpen}
-					onClose={this.handleDialogClose}
-					aria-labelledby="form-dialog-title"
-				>
-					<DialogTitle id="form-dialog-title">导入网络图片</DialogTitle>
-					<DialogContent>
-						<TextField
-							style={{width: 500}}
-							autoFocus
-							margin="dense"
-							id="webImageUrl"
-							label="图片URL"
-							type="text"
-							value={webImageUrl}
-							onChange={this.handleUrlChange}
-						/>
-					</DialogContent>
-					<DialogActions>
-						<Button onClick={this.handleDialogClose} color="primary">
-							取消
-						</Button>
-						<Button onClick={this.importWebImage} disabled={_shouldShowCircularProgress}>确定</Button>
-					</DialogActions>
-				</Dialog>
-			</Grid>
+					<Dialog
+						open={dialogImportWebImageOpen}
+						onClose={this.handleDialogClose}
+						aria-labelledby="form-dialog-title"
+					>
+						<DialogTitle id="form-dialog-title">导入网络图片</DialogTitle>
+						<DialogContent>
+							<TextField
+								style={{width: 500}}
+								autoFocus
+								margin="dense"
+								id="webImageUrl"
+								label="图片URL"
+								type="text"
+								value={webImageUrl}
+								onChange={this.handleUrlChange}
+							/>
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={this.handleDialogClose} color="primary">
+								取消
+							</Button>
+							<Button onClick={this.importWebImage} disabled={_shouldShowCircularProgress}>确定</Button>
+						</DialogActions>
+					</Dialog>
+				</Grid>
+			</div>
 		);
 	}
 }
