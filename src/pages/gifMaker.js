@@ -208,23 +208,6 @@ class Gif extends React.Component {
 		window.location.replace("https://altair.gine.me/#/")
 	};
 
-	uploadImage = () => {
-		const {imgFile} = this.state;
-		let formData = new FormData();
-		formData.append('smfile', imgFile);
-
-		axios.post('https://sm.ms/api/upload', formData, {
-			headers: {
-				'Content-Type': 'multipart/form-data'
-			}
-		}).then(res => {
-			this.setState({
-				uploadImageUrl: res.url
-			})
-			return res.url
-		})
-	};
-
 	createTemplate = (imgUrl, captionTemplate) => {
 		axios.post('https://gine.me/gif/tmp/', {
 			'img_url': imgUrl,
@@ -242,14 +225,28 @@ class Gif extends React.Component {
 	uploadTemplate = () => {
 		const {webImageUrl, textData, imgFile} = this.state;
 		let url;
-		if (imgFile) {
-			url = this.uploadImage();
-		} else {
-			url = webImageUrl
-		}
-		// 创建模板记录
 		let tmp = JSON.stringify(textData);
-		this.createTemplate(url, tmp);
+		if (imgFile) {
+			let formData = new FormData();
+			formData.append('smfile', imgFile);
+
+			axios.post('https://sm.ms/api/upload', formData, {
+				headers: {
+					'Content-Type': 'multipart/form-data'
+				}
+			}).then(res => {
+				url = res.data.data.url;
+				this.setState({
+					uploadImageUrl: url
+				});
+				return url
+			}).then(url => {
+				this.createTemplate(url, tmp);
+			})
+		} else {
+			url = webImageUrl;
+			this.createTemplate(url, tmp);
+		}
 	};
 
 	handleActionClick = (action) => {
