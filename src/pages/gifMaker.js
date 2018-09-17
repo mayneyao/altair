@@ -200,7 +200,8 @@ class Gif extends React.Component {
 			gif: false,
 			webImageUrl: '',
 			showProcess: false,
-		})
+		});
+		window.location.replace("https://altair.gine.me/#/")
 	};
 
 	handleActionClick = (action) => {
@@ -602,7 +603,6 @@ class Gif extends React.Component {
 					this.handleImportTextData()
 				})
 			});
-			window.location.replace("https://altair.gine.me/#/")
 		}
 	}
 
