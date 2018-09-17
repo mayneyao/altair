@@ -52,7 +52,7 @@ class TitlebarGridList extends React.Component {
 				<Grid item md={3}></Grid>
 				<Grid item xs={12} md={6}>
 					<div className={classes.root}>
-						<GridList cellHeight='auto' className={classes.gridList} cols={1}>
+						<GridList cellHeight={200} className={classes.gridList} cols={2}>
 							<GridListTile key="Subheader" cols={2} style={{height: 'auto'}}>
 								<ListSubheader component="div">模板</ListSubheader>
 							</GridListTile>

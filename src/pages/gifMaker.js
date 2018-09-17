@@ -422,7 +422,7 @@ class Gif extends React.Component {
 	};
 
 	handleStartChange = (event, index) => {
-		const start = event.target.value;
+		const start = parseInt(event.target.value);
 		const {textData} = this.state;
 
 		let newTextData = textData.slice();
@@ -441,6 +441,7 @@ class Gif extends React.Component {
 	handleEndChange = (event, index) => {
 		// fuck js
 		// why event.target.value is string
+		// Warning: Received NaN for the `max` attribute. If this is expected, cast the value to a string.
 		const end = parseInt(event.target.value);
 		const {textData} = this.state;
 		let newTextData = textData.slice();
@@ -727,6 +728,8 @@ class Gif extends React.Component {
 							{
 								textData.map((data, index) => {
 									let [a, z] = data.timeDuration;
+									a = parseInt(a);
+									z = parseInt(z);
 									let text = data.text;
 									let startInputProps = {
 										min: 0,
@@ -758,6 +761,7 @@ class Gif extends React.Component {
 												type="number"
 												inputProps={startInputProps}
 												value={a}
+												max={maxFrame}
 												onChange={(e) => this.handleStartChange(e, index)}
 											/>
 										</Grid>
@@ -771,6 +775,7 @@ class Gif extends React.Component {
 												value={z}
 												inputProps={endInputProps}
 												type="number"
+												max={maxFrame}
 												onChange={(e) => this.handleEndChange(e, index)}
 											/>
 										</Grid>
