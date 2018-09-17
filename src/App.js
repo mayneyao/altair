@@ -45,6 +45,9 @@ const styles = theme => ({
 	},
 	menuRoot: {
 		width: 300
+	},
+	content: {
+		paddingTop: '1em'
 	}
 });
 
@@ -66,7 +69,7 @@ const menus = [
 class App extends React.Component {
 
 	constructor(props) {
-		super(props)
+		super(props);
 		this.state = {
 			drawerOpen: false,
 		}
@@ -80,11 +83,10 @@ class App extends React.Component {
 
 	render() {
 		const {classes} = this.props;
-		const {drawerOpen} = this.state
+		const {drawerOpen} = this.state;
 		return (
 			<Router>
-				<Grid container spacing={16}>
-
+				<Grid container spacing={0}>
 					<Grid item xs={12}>
 						<div className={classes.root}>
 							<AppBar position="static" color="default">
