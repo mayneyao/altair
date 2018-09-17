@@ -24,7 +24,7 @@ yarn start
 + 自定义字幕位置和样式
 + canvas resize 屏幕适配
 + 模板发布(添加后端)
-+ 优化canvas转gif
++ ~~优化canvas转gif~~
 
 
 # 感谢
@@ -32,10 +32,14 @@ yarn start
 + 灵感来源(为所欲为): [sorry](https://github.com/xtyxtyx/sorry)
 
 
-+ canvas转gif: [jsgif](https://github.com/antimatter15/jsgif)
++ canvas转gif: [jsgif](https://github.com/antimatter15/jsgif) [gif.js](https://github.com/jnordberg/gif.js)
 
   canvas转gif还是有点慢
 
 + gif解析: [fastgif](https://github.com/samthor/fastgif) [omggif](https://github.com/deanm/omggif)
 
   开始用的 `omggif` 解码,然后自己写帧数处理,效率太低了,后来用上`fastgif`速度快多了(`wasm`真香)
+
+# 更新记录
+
+2018-09-17: canvas转gif，`jsgif`=>`gif.js`
