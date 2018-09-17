@@ -591,7 +591,7 @@ class Gif extends React.Component {
 	componentDidMount() {
 		let sp = new URLSearchParams(this.props.location.search);
 		let tmpId = sp.get('tmpId');
-		if (tmpId.length) {
+		if (tmpId && tmpId.length) {
 			axios.get(`https://gine.me/gif/tmp/${tmpId}/`).then(res => {
 				const {img_url, caption_template} = res.data;
 				this.setState({
@@ -602,8 +602,8 @@ class Gif extends React.Component {
 					this.handleImportTextData()
 				})
 			})
+			location.replace("https://altair.gine.me/#/")
 		}
-
 	}
 
 	render() {
