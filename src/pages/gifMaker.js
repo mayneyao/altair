@@ -665,11 +665,11 @@ class Gif extends React.Component {
 
 		let actions = [{icon: <WebIcon/>, name: '导入网络图片', action: 'importWebImage'},];
 
-		if (!uploadTemplateDone) {
-			actions = actions.concat([{icon: <UploadIcon/>, name: '上传模板', action: 'upload'},])
-		}
-		
+
 		if (isFileParseDone) {
+			if (!uploadTemplateDone) {
+				actions = actions.concat([{icon: <UploadIcon/>, name: '上传模板', action: 'upload'},])
+			}
 			actions = actions.concat([
 				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
 				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
