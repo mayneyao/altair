@@ -88,7 +88,7 @@ class App extends React.Component {
 					<Grid item xs={12}>
 						<div className={classes.root}>
 							<AppBar position="static" color="default">
-								<Toolbar>
+								<Toolbar variant="dense">
 									<IconButton className={classes.menuButton} color="inherit" aria-label="Menu"
 									            onClick={() => this.toggleDrawer(true)}>
 										<MenuIcon/>
