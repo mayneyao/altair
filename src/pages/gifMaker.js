@@ -665,6 +665,10 @@ class Gif extends React.Component {
 
 		let actions = [{icon: <WebIcon/>, name: '导入网络图片', action: 'importWebImage'},];
 
+		if (!uploadTemplateDone) {
+			actions = actions.concat([{icon: <UploadIcon/>, name: '上传模板', action: 'upload'},])
+		}
+		
 		if (isFileParseDone) {
 			actions = actions.concat([
 				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
@@ -676,9 +680,7 @@ class Gif extends React.Component {
 				{icon: <AddIcon/>, name: '添加字幕', action: 'addText'},
 			])
 		}
-		if (!uploadTemplateDone) {
-			actions = actions.concat([{icon: <UploadIcon/>, name: '上传模板', action: 'upload'},])
-		}
+
 
 		const _shouldShowCircularProgress = this.shouldShowCircularProgress();
 		return (
