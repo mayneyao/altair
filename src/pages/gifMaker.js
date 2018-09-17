@@ -221,6 +221,7 @@ class Gif extends React.Component {
 			this.setState({
 				uploadImageUrl: res.url
 			})
+			return res.url
 		})
 	};
 
@@ -235,7 +236,6 @@ class Gif extends React.Component {
 				})
 			}
 			console.log(res)
-			return res.url
 		})
 	};
 
