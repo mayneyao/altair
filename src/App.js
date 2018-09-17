@@ -61,6 +61,9 @@ const styles = theme => ({
 			},
 		},
 	},
+	icon: {
+		width: 64
+	}
 });
 
 
