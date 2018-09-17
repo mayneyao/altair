@@ -28,7 +28,7 @@ const styles = theme => ({
 
 class TitlebarGridList extends React.Component {
 	constructor(props) {
-		super(props)
+		super(props);
 		this.state = {
 			tileData: []
 		}
