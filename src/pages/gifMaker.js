@@ -36,6 +36,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 import copy from 'copy-to-clipboard';
+import axios from 'axios';
 
 
 const downloadFile = (outputUrl, name) => {
@@ -585,6 +586,24 @@ class Gif extends React.Component {
 		if (this.state.intervalId) {
 			clearInterval(this.state.intervalId);
 		}
+	}
+
+	componentDidMount() {
+		let sp = new URLSearchParams(this.props.location.search);
+		let tmpId = sp.get('tmpId');
+		if (tmpId.length) {
+			axios.get(`https://gine.me/gif/tmp/${tmpId}/`).then(res => {
+				const {img_url, caption_template} = res.data;
+				this.setState({
+					textTemplate: caption_template,
+					webImageUrl: img_url,
+				}, () => {
+					this.importWebImage();
+					this.handleImportTextData()
+				})
+			})
+		}
+
 	}
 
 	render() {

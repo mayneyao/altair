@@ -17,6 +17,7 @@ import InboxIcon from '@material-ui/icons/Inbox';
 
 
 import gifMaker from './pages/gifMaker';
+import gifTemplate from './pages/gifTemplate';
 
 
 const styles = theme => ({
@@ -125,6 +126,7 @@ class App extends React.Component {
 					<Grid item xs={12}>
 						<main className={classes.content}>
 							<Route key='1' path='/' exact component={gifMaker}/>
+							<Route key='2' path='/tmp' exact component={gifTemplate}/>
 						</main>
 					</Grid>
 				</Grid>
