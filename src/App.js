@@ -1,20 +1,20 @@
 import React from 'react';
 import {withStyles} from '@material-ui/core/styles';
-
 import {HashRouter as Router, Link, Route} from "react-router-dom";
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
+import MenuList from '@material-ui/core/MenuList';
+import MenuItem from '@material-ui/core/MenuItem';
 import Drawer from '@material-ui/core/Drawer';
 import Grid from '@material-ui/core/Grid';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import InboxIcon from '@material-ui/icons/Inbox';
-
+import BuildIcon from '@material-ui/icons/Build';
+import PhotoLibraryIcon from '@material-ui/icons/PhotoLibrary';
+import grey from '@material-ui/core/colors/grey';
 
 import gifMaker from './pages/gifMaker';
 import gifTemplate from './pages/gifTemplate';
@@ -49,22 +49,50 @@ const styles = theme => ({
 	},
 	content: {
 		paddingTop: '1em'
-	}
+	},
+	a: {
+		textDecoration: 'none',
+	},
+	menuItem: {
+		'&:focus': {
+			backgroundColor: grey[200],
+			'& $primary': {
+				color: grey[900],
+			},
+		},
+	},
 });
 
 
 const menus = [
 	{
 		path: '/',
-		menu: <Link to="/" key='1'>
-			<ListItem button>
-				<ListItemIcon>
-					<InboxIcon/>
-				</ListItemIcon>
-				<ListItemText primary="gif制作"/>
-			</ListItem>
-		</Link>
-	}
+		menu: (props) => {
+			const {classes} = props;
+			return <Link to="/" className={classes.a}>
+				<MenuItem className={classes.menuItem}>
+					<ListItemIcon className={classes.icon}>
+						<BuildIcon style={{color: '#2196f3'}}/>
+					</ListItemIcon>
+					<ListItemText classes={{primary: classes.primary}} inset primary="制作"/>
+				</MenuItem>
+			</Link>
+		}
+	},
+	{
+		path: '/',
+		menu: (props) => {
+			const {classes} = props;
+			return <Link to="/tmp" className={classes.a}>
+				<MenuItem className={classes.menuItem}>
+					<ListItemIcon className={classes.icon}>
+						<PhotoLibraryIcon style={{color: '#ff5722'}}/>
+					</ListItemIcon>
+					<ListItemText classes={{primary: classes.primary}} inset primary="模板"/>
+				</MenuItem>
+			</Link>
+		}
+	},
 ];
 
 class App extends React.Component {
@@ -113,11 +141,11 @@ class App extends React.Component {
 						>
 
 							<div className={classes.menuRoot}>
-								<List component="nav">
+								<MenuList>
 									{
-										menus.map(item => item.menu)
+										menus.map(item => item.menu(this.props))
 									}
-								</List>
+								</MenuList>
 							</div>
 
 						</div>
