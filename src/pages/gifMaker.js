@@ -48,8 +48,10 @@ const downloadFile = (outputUrl, name) => {
 };
 
 const styles = theme => ({
+	canvasWrapper: {
+		margin: '0 auto',
+	},
 	upload: {
-		width: '100%',
 		border: 'dashed 2px #aaa',
 	},
 	speedDial: {
@@ -621,8 +623,7 @@ class Gif extends React.Component {
 							}
 						</div>
 						<Card>
-							<div style={{margin: '0 auto'}}>
-
+							<div className={file ? classes.canvasWrapper : classes.upload}>
 								<input
 									onChange={this.handleFileChange}
 									accept="image/gif"
@@ -635,7 +636,7 @@ class Gif extends React.Component {
 									file ? <canvas id="canvas" className={classes.media}>
 										</canvas>
 										: <label htmlFor="raised-button-file">
-											<canvas id="canvas" className={classes.upload}>
+											<canvas id="canvas" className={classes.media}>
 											</canvas>
 										</label>
 								}
