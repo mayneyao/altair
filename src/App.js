@@ -1,9 +1,6 @@
 import React from 'react';
 import {withStyles} from '@material-ui/core/styles';
 import {HashRouter as Router, Link, Route} from "react-router-dom";
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import MenuList from '@material-ui/core/MenuList';
@@ -40,10 +37,7 @@ const styles = theme => ({
 	flex: {
 		flex: 1,
 	},
-	menuButton: {
-		marginLeft: -12,
-		marginRight: 20,
-	},
+	menuButton: {},
 	menuRoot: {
 		width: 300
 	},
@@ -121,17 +115,10 @@ class App extends React.Component {
 				<Grid container spacing={0}>
 					<Grid item xs={12}>
 						<div className={classes.root}>
-							<AppBar position="static" color="default">
-								<Toolbar variant="dense">
-									<IconButton className={classes.menuButton} color="inherit" aria-label="Menu"
-									            onClick={() => this.toggleDrawer(true)}>
-										<MenuIcon/>
-									</IconButton>
-									<Typography variant="title" color="inherit" className={classes.flex}>
-										Altair
-									</Typography>
-								</Toolbar>
-							</AppBar>
+							<IconButton className={classes.menuButton} color="inherit" aria-label="Menu"
+							            onClick={() => this.toggleDrawer(true)}>
+								<MenuIcon/>
+							</IconButton>
 						</div>
 					</Grid>
 
