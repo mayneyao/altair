@@ -61,7 +61,7 @@ class TitlebarGridList extends React.Component {
 									<img src={tile.img_url} alt={tile.title}/>
 									<GridListTileBar
 										title={tile.title}
-										subtitle={<span>by: {tile.author}</span>}
+										subtitle={<span/>}
 										actionIcon={
 											<IconButton className={classes.icon} href={`/#/?tmpId=${tile.id}`}>
 												<InfoIcon/>

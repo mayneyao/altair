@@ -213,19 +213,20 @@ class Gif extends React.Component {
 	createTemplate = (imgUrl, captionTemplate) => {
 		axios.post('https://gine.me/gif/tmp/', {
 			'img_url': imgUrl,
-			'caption_template': captionTemplate
+			'caption_template': captionTemplate,
+			'showProcess': true,
 		}).then(res => {
 			if (res.status === 201) {
 				this.setState({
-					uploadTemplateDone: true
+					uploadTemplateDone: true,
+					'showProcess': false,
 				})
 			}
-			console.log(res)
 		})
 	};
 
 	uploadTemplate = () => {
-		const {webImageUrl, textData, imgFile} = this.state;
+		const {textData, imgFile, file} = this.state;
 		let url;
 		let tmp = JSON.stringify(textData);
 		if (imgFile) {
@@ -246,8 +247,7 @@ class Gif extends React.Component {
 				this.createTemplate(url, tmp);
 			})
 		} else {
-			url = webImageUrl;
-			this.createTemplate(url, tmp);
+			this.createTemplate(file.url, tmp);
 		}
 	};
 
