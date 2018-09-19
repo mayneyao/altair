@@ -32,18 +32,25 @@ class TitlebarGridList extends React.Component {
 	constructor(props) {
 		super(props);
 		let records = [];
+
 		// init db
 		let db = new localStorageDB("altair", localStorage);
+
 		if (db.isNew()) {
 			db.createTable("gifx", ["image_url", "caption_template", "create_time"]);
-		} else {
-			records = db.queryAll("gifx", {sort: [["ID", "DESC"]]});
 		}
+		try {
+			db.queryAll("gifx", {sort: [["ID", "DESC"]]});
+		} catch (e) {
+			console.log(e);
+			db.createTable("gifx", ["image_url", "caption_template", "create_time"]);
+		}
+		records = db.queryAll("gifx", {sort: [["ID", "DESC"]]});
+
 		this.state = {
 			tileData: records,
 			db
 		}
-
 	}
 
 	fetchData = () => {

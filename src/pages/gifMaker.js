@@ -137,6 +137,7 @@ class Gif extends React.Component {
 		try {
 			db.queryAll("gifx", {sort: [["ID", "DESC"]]});
 		} catch (e) {
+			console.log(e);
 			db.createTable("gifx", ["image_url", "caption_template", "create_time"]);
 		}
 
