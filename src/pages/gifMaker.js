@@ -10,12 +10,9 @@ import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
 import DownLoadIcon from '@material-ui/icons/FileDownload';
-import UploadIcon from '@material-ui/icons/CloudUpload';
 import PreIcon from '@material-ui/icons/SkipPrevious';
 import NextIcon from '@material-ui/icons/SkipNext';
 import VisibilityIcon from '@material-ui/icons/Visibility';
-import ContentCopyIcon from '@material-ui/icons/ContentCopy';
-import InputIcon from '@material-ui/icons/Input';
 import WebIcon from '@material-ui/icons/Http';
 import LinearProgress from '@material-ui/core/LinearProgress';
 
@@ -38,6 +35,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 import copy from 'copy-to-clipboard';
 import axios from 'axios';
+import localStorageDB from 'localstoragedb';
 
 
 const downloadFile = (outputUrl, name) => {
@@ -129,7 +127,16 @@ const styles = theme => ({
 class Gif extends React.Component {
 	constructor(props) {
 		super(props);
+
+		// init db
+		let db = new localStorageDB("altair", localStorage);
+
+		if (db.isNew()) {
+			db.createTable("gifx", ["image_url", "caption_template", "create_time"]);
+		}
+
 		this.state = {
+			db,
 			dialogOpen: false,
 			currentFrame: 0,
 			play: true,
@@ -148,7 +155,11 @@ class Gif extends React.Component {
 			dialogImportWebImageOpen: false,
 			showProcess: false,
 			imgFile: undefined,
-			uploadTemplateDone: false
+			uploadTemplateDone: false,
+			gifx: {
+				image_url: '',
+				caption_template: '',
+			}
 		}
 	}
 
@@ -205,11 +216,16 @@ class Gif extends React.Component {
 			webImageUrl: '',
 			uploadImageUrl: '',
 			showProcess: false,
-			uploadTemplateDone: false
+			uploadTemplateDone: false,
+			gifx: {
+				image_url: '',
+				caption_template: '',
+			}
 		});
 		window.location.replace("https://altair.gine.me/#/")
 	};
 
+	// 上传模板到远程仓库
 	createTemplate = (imgUrl, captionTemplate) => {
 		axios.post('https://gine.me/gif/tmp/', {
 			'img_url': imgUrl,
@@ -225,8 +241,9 @@ class Gif extends React.Component {
 		})
 	};
 
-	uploadTemplate = () => {
-		const {textData, imgFile, file} = this.state;
+	// 上传本地图片
+	uploadImage = (func) => {
+		const {textData, imgFile,} = this.state;
 		let url;
 		let tmp = JSON.stringify(textData);
 		if (imgFile) {
@@ -240,14 +257,15 @@ class Gif extends React.Component {
 			}).then(res => {
 				url = res.data.data.url;
 				this.setState({
-					uploadImageUrl: url
+					uploadImageUrl: url,
+					gifx: {
+						image_url: url,
+						caption_template: tmp
+					}
+				}, () => {
+					func()
 				});
-				return url
-			}).then(url => {
-				this.createTemplate(url, tmp);
 			})
-		} else {
-			this.createTemplate(file.url, tmp);
 		}
 	};
 
@@ -550,12 +568,12 @@ class Gif extends React.Component {
 	};
 
 	saveToGif = () => {
-		const {gifInfo: {width, height}, maxFrame, delay, file: {name}} = this.state;
+		const {gifInfo: {width, height}, maxFrame, delay, file: {name}, imgFile} = this.state;
 		let canvas = document.createElement('canvas');
 		canvas.setAttribute("width", width);
 		canvas.setAttribute("height", height);
 		let context = canvas.getContext("2d");
-		const {gif, textData} = this.state;
+		const {gif, textData, gifx, db} = this.state;
 
 		// gif.js canvas 2 gif
 		let gifMaker = new window.GIF({
@@ -600,6 +618,27 @@ class Gif extends React.Component {
 		react.setState({showProcess: true}, () => {
 			gifMaker.render();
 		});
+
+		// 本地图片上传再创建本地记录
+		// 网络图片直接创建本地记录
+		if (imgFile) {
+			this.uploadImage(this.createLocalGifxRecord);
+		} else {
+			this.createLocalGifxRecord();
+		}
+	};
+
+	// 保存gifx到本地
+	createLocalGifxRecord = () => {
+		const {db, gifx, textData} = this.state;
+		let now = new Date();
+		let caption_template = JSON.stringify(textData);
+		db.insert("gifx", {
+			image_url: gifx.image_url,
+			caption_template: caption_template,
+			create_time: now.toISOString()
+		});
+		db.commit();
 	};
 
 	toggleDrawer = (open) => {
@@ -642,17 +681,43 @@ class Gif extends React.Component {
 	componentDidMount() {
 		let sp = new URLSearchParams(this.props.location.search);
 		let tmpId = sp.get('tmpId');
+		let tmpFrom = sp.get('from');
 		if (tmpId && tmpId.length) {
-			axios.get(`https://gine.me/gif/tmp/${tmpId}/`).then(res => {
-				const {img_url, caption_template} = res.data;
+
+			if (tmpFrom === 'myGif') {
+				const {db} = this.state;
+				let record = db.queryAll("gifx", {
+					query: {ID: parseInt(tmpId)}
+				});
+				const {image_url, caption_template} = record[0];
 				this.setState({
 					textTemplate: caption_template,
-					webImageUrl: img_url,
+					webImageUrl: image_url,
+					gifx: {
+						image_url,
+						caption_template,
+					}
 				}, () => {
 					this.importWebImage();
 					this.handleImportTextData()
 				})
-			});
+
+			} else {
+				axios.get(`https://gine.me/gif/tmp/${tmpId}/`).then(res => {
+					const {img_url, caption_template} = res.data;
+					this.setState({
+						textTemplate: caption_template,
+						webImageUrl: img_url,
+						gifx: {
+							image_url: img_url,
+							caption_template,
+						}
+					}, () => {
+						this.importWebImage();
+						this.handleImportTextData()
+					})
+				});
+			}
 		}
 	}
 
@@ -665,22 +730,17 @@ class Gif extends React.Component {
 
 		let actions = [{icon: <WebIcon/>, name: '导入网络图片', action: 'importWebImage'},];
 
-
 		if (isFileParseDone) {
-			if (!uploadTemplateDone) {
-				actions = actions.concat([{icon: <UploadIcon/>, name: '上传模板', action: 'upload'},])
-			}
 			actions = actions.concat([
 				{icon: <DownLoadIcon/>, name: '保存', action: 'save'},
 				{icon: <VisibilityIcon/>, name: '预览', action: 'preview'},
-				{icon: <ContentCopyIcon/>, name: '复制字幕模板', action: 'exportText'},
-				{icon: <InputIcon/>, name: '导入字幕模板', action: 'importText'},
+				// {icon: <ContentCopyIcon/>, name: '复制字幕模板', action: 'exportText'},
+				// {icon: <InputIcon/>, name: '导入字幕模板', action: 'importText'},
 				{icon: <DeleteIcon/>, name: '重置', action: 'init'},
 				{icon: <RemoveIcon/>, name: '删除字幕', action: 'removeText'},
 				{icon: <AddIcon/>, name: '添加字幕', action: 'addText'},
 			])
 		}
-
 
 		const _shouldShowCircularProgress = this.shouldShowCircularProgress();
 		return (

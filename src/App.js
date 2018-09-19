@@ -10,13 +10,14 @@ import Grid from '@material-ui/core/Grid';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import BuildIcon from '@material-ui/icons/Build';
+import HomeIcon from '@material-ui/icons/Home';
 import PhotoLibraryIcon from '@material-ui/icons/PhotoLibrary';
+import FavoriteIcon from '@material-ui/icons/Favorite';
 import grey from '@material-ui/core/colors/grey';
 
 import gifMaker from './pages/gifMaker';
 import gifTemplate from './pages/gifTemplate';
-
-import logo from './logo.svg';
+import myGif from './pages/myGif';
 
 
 const styles = theme => ({
@@ -83,15 +84,43 @@ const menus = [
 		}
 	},
 	{
-		path: '/',
+		path: '/tmp',
 		menu: (props) => {
 			const {classes} = props;
 			return <Link to="/tmp" className={classes.a}>
 				<MenuItem className={classes.menuItem}>
 					<ListItemIcon className={classes.icon}>
+						<HomeIcon style={{color: '#009688'}}/>
+					</ListItemIcon>
+					<ListItemText classes={{primary: classes.primary}} inset primary="模板仓库"/>
+				</MenuItem>
+			</Link>
+		}
+	},
+	{
+		path: '/my/gif',
+		menu: (props) => {
+			const {classes} = props;
+			return <Link to="/my/gif" className={classes.a}>
+				<MenuItem className={classes.menuItem}>
+					<ListItemIcon className={classes.icon}>
 						<PhotoLibraryIcon style={{color: '#ff5722'}}/>
 					</ListItemIcon>
-					<ListItemText classes={{primary: classes.primary}} inset primary="模板"/>
+					<ListItemText classes={{primary: classes.primary}} inset primary="我的图库"/>
+				</MenuItem>
+			</Link>
+		}
+	},
+	{
+		path: '/my/fav',
+		menu: (props) => {
+			const {classes} = props;
+			return <Link to="/my/fav" className={classes.a}>
+				<MenuItem className={classes.menuItem}>
+					<ListItemIcon className={classes.icon}>
+						<FavoriteIcon style={{color: '#e91e63'}}/>
+					</ListItemIcon>
+					<ListItemText classes={{primary: classes.primary}} inset primary="我的收藏"/>
 				</MenuItem>
 			</Link>
 		}
@@ -151,6 +180,7 @@ class App extends React.Component {
 						<main className={classes.content}>
 							<Route key='1' path='/' exact component={gifMaker}/>
 							<Route key='2' path='/tmp' exact component={gifTemplate}/>
+							<Route key='3' path='/my/gif' exact component={myGif}/>
 						</main>
 					</Grid>
 				</Grid>
