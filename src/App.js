@@ -16,6 +16,8 @@ import grey from '@material-ui/core/colors/grey';
 import gifMaker from './pages/gifMaker';
 import gifTemplate from './pages/gifTemplate';
 
+import logo from './logo.svg';
+
 
 const styles = theme => ({
 	media: {
@@ -57,6 +59,10 @@ const styles = theme => ({
 	},
 	icon: {
 		width: 64
+	},
+	logo: {
+		padding: '1em',
+		height: 90
 	}
 });
 
@@ -123,13 +129,13 @@ class App extends React.Component {
 					</Grid>
 
 					<Drawer open={drawerOpen} onClose={() => this.toggleDrawer(false)}>
+						{/*<img src={logo} alt="" className={classes.logo}/>*/}
 						<div
 							tabIndex={0}
 							role="button"
 							onClick={() => this.toggleDrawer(false)}
 							onKeyDown={() => this.toggleDrawer(false)}
 						>
-
 							<div className={classes.menuRoot}>
 								<MenuList>
 									{
