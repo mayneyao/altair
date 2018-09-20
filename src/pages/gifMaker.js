@@ -670,44 +670,45 @@ class Gif extends React.Component {
 		}
 	}
 
+
+	getTmp = (image_url, caption_template) => {
+		this.setState({
+			textTemplate: caption_template,
+			webImageUrl: image_url,
+			gifx: {
+				image_url,
+				caption_template,
+			}
+		}, () => {
+			this.importWebImage();
+			this.handleImportTextData()
+		})
+	};
+
 	componentDidMount() {
 		let sp = new URLSearchParams(this.props.location.search);
 		let tmpId = sp.get('tmpId');
 		let tmpFrom = sp.get('from');
+		const {db} = this.state;
 		if (tmpId && tmpId.length) {
-
 			if (tmpFrom === 'myGif') {
-				const {db} = this.state;
 				let record = db.queryAll("gifx", {
 					query: {ID: parseInt(tmpId)}
 				});
 				const {image_url, caption_template} = record[0];
-				this.setState({
-					textTemplate: caption_template,
-					webImageUrl: image_url,
-					gifx: {
-						image_url,
-						caption_template,
-					}
-				}, () => {
-					this.importWebImage();
-					this.handleImportTextData()
-				})
+				this.getTmp(image_url, caption_template);
 
-			} else {
+			} else if (tmpFrom === 'myFav') {
+				let record = db.queryAll("fav", {
+					query: {ID: parseInt(tmpId)}
+				});
+				const {image_url, caption_template} = record[0];
+				this.getTmp(image_url, caption_template);
+			}
+			else {
 				axios.get(`https://gine.me/gif/tmp/${tmpId}/`).then(res => {
 					const {img_url, caption_template} = res.data;
-					this.setState({
-						textTemplate: caption_template,
-						webImageUrl: img_url,
-						gifx: {
-							image_url: img_url,
-							caption_template,
-						}
-					}, () => {
-						this.importWebImage();
-						this.handleImportTextData()
-					})
+					this.getTmp(img_url, caption_template);
 				});
 			}
 		}

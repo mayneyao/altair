@@ -86,7 +86,7 @@ class FavGridList extends React.Component {
 													<DeleteIcon/>
 												</IconButton>
 												<IconButton className={classes.icon}
-												            href={`/#/?tmpId=${tile.ID}&from=myGif`}>
+												            href={`/#/?tmpId=${tile.ID}&from=myFav`}>
 													<InfoIcon/>
 												</IconButton>
 											</div>
