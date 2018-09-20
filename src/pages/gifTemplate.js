@@ -9,6 +9,8 @@ import GridListTileBar from '@material-ui/core/GridListTileBar';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import IconButton from '@material-ui/core/IconButton';
 import InfoIcon from '@material-ui/icons/Info';
+import FavoriteIcon from '@material-ui/icons/Favorite';
+import initdb from '../common/initdb';
 
 const styles = theme => ({
 	root: {
@@ -24,25 +26,80 @@ const styles = theme => ({
 	icon: {
 		color: 'rgba(255, 255, 255, 0.54)',
 	},
+	redIcon: {
+		color: 'rgba(255, 0, 0, 0.54)',
+	},
 });
 
 class TitlebarGridList extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = {
-			tileData: []
-		}
+		let db = initdb();
 
+		this.state = {
+			db,
+			tileData: [],
+			favOriginRecord: [],
+		}
 	}
+
+	updateFavItem = () => {
+		const {db, tileData} = this.state;
+		let favOriginRecord = db.queryAll("fav", {
+			query: {source_type: 'origin'}
+		});
+		let data = [];
+		tileData.map(item => {
+			if (favOriginRecord.some(r => r.source_id === item.id)) {
+				data.push({
+					...item,
+					is_fav: true,
+				})
+			} else {
+				data.push({
+					...item,
+					is_fav: false,
+				})
+			}
+		});
+		this.setState({
+			tileData: data
+		})
+	};
 
 	componentDidMount() {
 		axios.get('https://gine.me/gif/tmp/').then(res => {
 			this.setState({
 				tileData: res.data
+			}, () => {
+				this.updateFavItem();
 			})
 		})
-
 	}
+
+	rmFav = (record) => {
+		const {db} = this.state;
+		db.deleteRows("fav", {
+			source_type: 'origin',
+			source_id: record.id
+		});
+		db.commit();
+		this.updateFavItem();
+	};
+
+	addFav = (record) => {
+		const {db} = this.state;
+		let now = new Date();
+		db.insert("fav", {
+			image_url: record.img_url,
+			caption_template: record.caption_template,
+			create_time: now.toISOString(),
+			source_type: 'origin',
+			source_id: record.id
+		});
+		db.commit();
+		this.updateFavItem();
+	};
 
 	render() {
 		const {classes} = this.props;
@@ -63,9 +120,24 @@ class TitlebarGridList extends React.Component {
 										title={tile.title}
 										subtitle={<span/>}
 										actionIcon={
-											<IconButton className={classes.icon} href={`/#/?tmpId=${tile.id}`}>
-												<InfoIcon/>
-											</IconButton>
+											<div>
+												{
+													tile.is_fav ?
+														<IconButton className={classes.redIcon}
+														            onClick={() => this.rmFav(tile)}>
+															<FavoriteIcon/>
+														</IconButton>
+														:
+														<IconButton className={classes.icon}
+														            onClick={() => this.addFav(tile)}>
+															<FavoriteIcon/>
+														</IconButton>
+												}
+												<IconButton className={classes.icon} href={`/#/?tmpId=${tile.id}`}>
+													<InfoIcon/>
+												</IconButton>
+											</div>
+
 										}
 									/>
 								</GridListTile>
@@ -75,7 +147,6 @@ class TitlebarGridList extends React.Component {
 				</Grid>
 				<Grid item md={3}></Grid>
 			</Grid>
-
 		);
 	}
 }
