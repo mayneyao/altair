@@ -557,7 +557,7 @@ class Gif extends React.Component {
 		}
 
 		let newTextData = [...textData, {
-			timeDuration: [startFrame, 0],
+			timeDuration: [startFrame, startFrame + 1],
 			text: ''
 		}];
 		this.setState({
