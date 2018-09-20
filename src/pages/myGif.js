@@ -31,6 +31,9 @@ const styles = theme => ({
 	redIcon: {
 		color: 'rgba(255, 0, 0, 0.54)',
 	},
+	greenIcon: {
+		color: 'rgba(0, 255, 0, 0.54)',
+	},
 });
 
 class MyGifGridList extends React.Component {
@@ -110,9 +113,16 @@ class MyGifGridList extends React.Component {
 	};
 
 	uploadTemplate = (id) => {
-		const {tileData} = this.state;
+		const {db, tileData} = this.state;
 		let record = tileData.find(item => item.ID === id);
+
+		db.update("gifx", {ID: id}, function (row) {
+			row.is_upload = true;
+			return row;
+		});
+		db.commit();
 		this.createTemplate(record.image_url, record.caption_template);
+		this.fetchData();
 	};
 
 	render() {
@@ -153,10 +163,17 @@ class MyGifGridList extends React.Component {
 												            onClick={() => this.deleteRecord(tile.ID)}>
 													<DeleteIcon/>
 												</IconButton>
-												<IconButton className={classes.icon}
-												            onClick={() => this.uploadTemplate(tile.ID)}>
-													<CloudUploadIcon/>
-												</IconButton>
+												{
+													tile.is_upload ?
+														<IconButton className={classes.greenIcon}>
+															<CloudUploadIcon/>
+														</IconButton> :
+														<IconButton className={classes.icon}
+														            onClick={() => this.uploadTemplate(tile.ID)}>
+															<CloudUploadIcon/>
+														</IconButton>
+												}
+
 												<IconButton className={classes.icon}
 												            href={`/#/?tmpId=${tile.ID}&from=myGif`}>
 													<InfoIcon/>
