@@ -142,6 +142,7 @@ class Gif extends React.Component {
 		}
 
 		this.state = {
+			fontSize: 20,
 			db,
 			dialogOpen: false,
 			currentFrame: 0,
@@ -306,7 +307,7 @@ class Gif extends React.Component {
 	}
 
 	showFrame = (num) => {
-		const {context, gif, maxFrame, textData, gifInfo: {width, height}} = this.state;
+		const {context, gif, maxFrame, textData, gifInfo: {width, height}, fontSize} = this.state;
 		let thisFrame = textData.filter(item => {
 			let [a, z] = item.timeDuration;
 			if (num >= a && num < z) {
@@ -324,7 +325,7 @@ class Gif extends React.Component {
 			return;
 		}
 		const startPx = parseInt(width / 2, 10);
-		context.font = '20px serif';
+		context.font = `${fontSize}px serif`;
 		context.textAlign = 'center';
 		context.textBaseline = 'bottom';
 		context.fillStyle = "#fff";
@@ -377,6 +378,13 @@ class Gif extends React.Component {
 			play: false,
 		});
 		clearInterval(this.state.intervalId);
+	};
+
+	handleFontSizeChange = (event) => {
+		this.setState({
+			fontSize: event.target.value,
+			play: false,
+		});
 	};
 
 	parseImage = (imageDataList) => {
@@ -563,7 +571,7 @@ class Gif extends React.Component {
 		canvas.setAttribute("width", width);
 		canvas.setAttribute("height", height);
 		let context = canvas.getContext("2d");
-		const {gif, textData, gifx, db} = this.state;
+		const {gif, textData, fontSize} = this.state;
 
 		// gif.js canvas 2 gif
 		let gifMaker = new window.GIF({
@@ -584,7 +592,7 @@ class Gif extends React.Component {
 			}
 			if (thisFrame.length > 0) {
 				const startPx = parseInt(width / 2, 10);
-				context.font = '20px serif';
+				context.font = `${fontSize}px serif`;
 				context.textAlign = 'center';
 				context.textBaseline = 'bottom';
 				context.fillStyle = "#fff";
@@ -718,7 +726,7 @@ class Gif extends React.Component {
 		const {classes} = this.props;
 		const {
 			hidden, open, file, dialogOpen, textTemplate, currentFrame, maxFrame, gif, play,
-			textData, webImageUrl, dialogImportWebImageOpen, isFileParseDone, showProcess, uploadTemplateDone
+			textData, webImageUrl, dialogImportWebImageOpen, isFileParseDone, showProcess, fontSize
 		} = this.state;
 
 		let actions = [{icon: <WebIcon/>, name: '导入网络图片', action: 'importWebImage'},];
@@ -814,7 +822,7 @@ class Gif extends React.Component {
 						<div>
 							<TextField
 								id="frame"
-								label="frame"
+								label="当前帧"
 								className={classes.textField}
 								value={this.state.currentFrame}
 								type="number"
@@ -823,13 +831,23 @@ class Gif extends React.Component {
 							/>
 							<TextField
 								id="delay"
-								label="delay"
+								label="延迟(ms)"
 								className={classes.textField}
 								value={this.state.delay}
 								onChange={this.handleDelayChange}
 								type="number"
 								margin="normal"
 							/>
+							<TextField
+								id="fontSize"
+								label="字体大小(px)"
+								className={classes.textField}
+								value={fontSize}
+								onChange={this.handleFontSizeChange}
+								type="number"
+								margin="normal"
+							/>
+
 						</div>
 						<div style={{padding: 20}}>
 							{
