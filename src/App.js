@@ -18,6 +18,7 @@ import grey from '@material-ui/core/colors/grey';
 import gifMaker from './pages/gifMaker';
 import gifTemplate from './pages/gifTemplate';
 import myGif from './pages/myGif';
+import myFavorite from './pages/myFavorite';
 
 
 const styles = theme => ({
@@ -181,6 +182,7 @@ class App extends React.Component {
 							<Route key='1' path='/' exact component={gifMaker}/>
 							<Route key='2' path='/tmp' exact component={gifTemplate}/>
 							<Route key='3' path='/my/gif' exact component={myGif}/>
+							<Route key='4' path='/my/fav' exact component={myFavorite}/>
 						</main>
 					</Grid>
 				</Grid>

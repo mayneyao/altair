@@ -231,22 +231,6 @@ class Gif extends React.Component {
 		window.location.replace("https://altair.gine.me/#/")
 	};
 
-	// 上传模板到远程仓库
-	createTemplate = (imgUrl, captionTemplate) => {
-		axios.post('https://gine.me/gif/tmp/', {
-			'img_url': imgUrl,
-			'caption_template': captionTemplate,
-			'showProcess': true,
-		}).then(res => {
-			if (res.status === 201) {
-				this.setState({
-					uploadTemplateDone: true,
-					'showProcess': false,
-				})
-			}
-		})
-	};
-
 	// 上传本地图片
 	uploadImage = (func) => {
 		const {textData, imgFile,} = this.state;
@@ -642,7 +626,9 @@ class Gif extends React.Component {
 		db.insert("gifx", {
 			image_url: gifx.image_url,
 			caption_template: caption_template,
-			create_time: now.toISOString()
+			create_time: now.toISOString(),
+			is_fav: false,
+			is_upload: false,
 		});
 		db.commit();
 	};
