@@ -1,0 +1,15 @@
+{
+  "name": "wasm-gif",
+  "collaborators": [
+    "mayne <dreama9ain@gmail.com>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "wasm_gif_bg.wasm",
+    "wasm_gif.js",
+    "wasm_gif.d.ts"
+  ],
+  "module": "wasm_gif.js",
+  "types": "wasm_gif.d.ts",
+  "sideEffects": "false"
+}

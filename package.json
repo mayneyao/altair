@@ -1,40 +1,39 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "altair",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "repository": "git@github.com:mayneyao/altair.git",
+  "author": "mayne <dreama9ain@gmail.com>",
+  "license": "MIT",
   "private": true,
   "dependencies": {
-    "@material-ui/core": "^1.1.0",
-    "@material-ui/icons": "^1.0.0-beta.42",
-    "@material-ui/lab": "^3.0.0-alpha.15",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+    "@material-ui/core": "^3.3.0",
+    "@material-ui/icons": "^3.0.1",
+    "@material-ui/lab": "^3.0.0-alpha.21",
     "axios": "^0.18.0",
-    "b64": "^4.0.0",
-    "ccapture.js": "^1.0.9",
     "copy-to-clipboard": "^3.0.8",
-    "fastgif": "^0.1.1",
-    "jsgif": "^1.0.2",
     "localstoragedb": "^2.3.2",
-    "material-ui": "^1.0.0-beta.40",
-    "material-ui-icons": "^1.0.0-beta.36",
-    "paralleljs": "^0.2.1",
-    "pixel-gif": "^0.0.1",
-    "rc-slider": "^8.6.1",
-    "react": "^16.3.1",
-    "react-dom": "^16.3.1",
-    "react-router": "^4.2.0",
-    "react-router-dom": "^4.2.2",
-    "react-scripts": "2.0.3",
-    "vuepress": "^0.6.0"
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2",
+    "react-router": "^4.3.1",
+    "react-router-dom": "^4.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.4",
+    "css-loader": "^1.0.0",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "style-loader": "^0.23.1",
+    "webpack": "^4.22.0",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
-  },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+    "start": "webpack-dev-server --open --mode development",
+    "build": "webpack --mode production"
+  }
 }

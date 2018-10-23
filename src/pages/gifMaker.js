@@ -674,9 +674,14 @@ class Gif extends React.Component {
 	}
 
 	componentDidMount() {
-		let sp = new URLSearchParams(this.props.location.search);
-		let tmpId = sp.get('tmpId');
-		let tmpFrom = sp.get('from');
+		console.log(this.props.location);
+
+		let sp = {};
+		// let sp = new URLSearchParams(this.props.location.search);
+		// let tmpId = sp.get('tmpId');
+		// let tmpFrom = sp.get('from');
+		let tmpId = undefined;
+		let tmpFrom = undefined;
 		const {db} = this.state;
 		if (tmpId && tmpId.length) {
 			if (tmpFrom === 'myGif') {
@@ -703,7 +708,6 @@ class Gif extends React.Component {
 	}
 
 	render() {
-		this.props.wasm.greet('你好呀');
 		const {classes} = this.props;
 		const {
 			hidden, open, file, dialogOpen, textTemplate, currentFrame, maxFrame, gif, play,
