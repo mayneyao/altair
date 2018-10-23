@@ -4,5 +4,12 @@ import './index.css';
 import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const wasm = import('./pkg');
+
+wasm.then(
+	wasm => {
+		ReactDOM.render(<App wasm={wasm}/>, document.getElementById('root'));
+	}
+);
+
 registerServiceWorker();

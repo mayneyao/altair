@@ -15,7 +15,7 @@ import PhotoLibraryIcon from '@material-ui/icons/PhotoLibrary';
 import FavoriteIcon from '@material-ui/icons/Favorite';
 import grey from '@material-ui/core/colors/grey';
 
-import gifMaker from './pages/gifMaker';
+import GifMaker from './pages/gifMaker';
 import gifTemplate from './pages/gifTemplate';
 import myGif from './pages/myGif';
 import myFavorite from './pages/myFavorite';
@@ -130,18 +130,18 @@ const menus = [
 
 class App extends React.Component {
 
+	toggleDrawer = (open) => {
+		this.setState({
+			drawerOpen: open
+		})
+	};
+
 	constructor(props) {
 		super(props);
 		this.state = {
 			drawerOpen: false,
 		}
 	}
-
-	toggleDrawer = (open) => {
-		this.setState({
-			drawerOpen: open
-		})
-	};
 
 	render() {
 		const {classes} = this.props;
@@ -179,7 +179,7 @@ class App extends React.Component {
 
 					<Grid item xs={12}>
 						<main className={classes.content}>
-							<Route key='1' path='/' exact component={gifMaker}/>
+							<Route key='1' path='/' exact render={() => <GifMaker wasm={this.props.wasm}/>}/>
 							<Route key='2' path='/tmp' exact component={gifTemplate}/>
 							<Route key='3' path='/my/gif' exact component={myGif}/>
 							<Route key='4' path='/my/fav' exact component={myFavorite}/>

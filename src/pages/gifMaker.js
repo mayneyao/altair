@@ -123,59 +123,37 @@ const styles = theme => ({
 	}
 });
 
+var downloadBlob, downloadURL;
+
+downloadBlob = function (data, fileName, mimeType) {
+	var blob, url;
+	blob = new Blob([data], {
+		type: mimeType
+	});
+	url = window.URL.createObjectURL(blob);
+	downloadURL(url, fileName);
+	setTimeout(function () {
+		return window.URL.revokeObjectURL(url);
+	}, 1000);
+};
+
+downloadURL = function (data, fileName) {
+	var a;
+	a = document.createElement('a');
+	a.href = data;
+	a.download = fileName;
+	document.body.appendChild(a);
+	a.style = 'display: none';
+	a.click();
+	a.remove();
+};
 
 class Gif extends React.Component {
-	constructor(props) {
-		super(props);
-
-		// init db
-		let db = new localStorageDB("altair", localStorage);
-
-		if (db.isNew()) {
-			db.createTable("gifx", ["image_url", "caption_template", "create_time"]);
-		}
-		try {
-			db.queryAll("gifx", {sort: [["ID", "DESC"]]});
-		} catch (e) {
-			console.log(e);
-			db.createTable("gifx", ["image_url", "caption_template", "create_time"]);
-		}
-
-		this.state = {
-			fontSize: 20,
-			db,
-			dialogOpen: false,
-			currentFrame: 0,
-			play: true,
-			context: null,
-			data: [],
-			delay: 80,
-			isFileParseDone: false,
-			textData: [],
-			drawerOpen: false,
-			open: false,
-			hidden: false,
-			gif: false,
-			textTemplate: '',
-			webImageUrl: '',
-			uploadImageUrl: '',
-			dialogImportWebImageOpen: false,
-			showProcess: false,
-			imgFile: undefined,
-			uploadTemplateDone: false,
-			gifx: {
-				image_url: '',
-				caption_template: '',
-			}
-		}
-	}
-
 	handleUrlChange = (e) => {
 		this.setState({
 			webImageUrl: e.target.value,
 		})
 	};
-
 	handleImportTextData = () => {
 		const {textTemplate} = this.state;
 		let textData = [];
@@ -190,7 +168,6 @@ class Gif extends React.Component {
 			textTemplate: '',
 		})
 	};
-
 	handleTextTemplateChange = (e) => {
 		this.setState({
 			textTemplate: e.target.value,
@@ -202,7 +179,6 @@ class Gif extends React.Component {
 	handleDialogClose = () => {
 		this.setState({dialogOpen: false, textTemplate: '', dialogImportWebImageOpen: false, webImageUrl: ''});
 	};
-
 	init = () => {
 		this.setState({
 			dialogImportWebImageOpen: false,
@@ -231,7 +207,6 @@ class Gif extends React.Component {
 		});
 		window.location.replace("https://altair.gine.me/#/")
 	};
-
 	// 上传本地图片
 	uploadImage = (func) => {
 		const {textData, imgFile,} = this.state;
@@ -259,7 +234,6 @@ class Gif extends React.Component {
 			})
 		}
 	};
-
 	handleActionClick = (action) => {
 		if (action === 'exportText') {
 			const {textData} = this.state;
@@ -285,7 +259,6 @@ class Gif extends React.Component {
 			func();
 		}
 	};
-
 	handleOpen = () => {
 		if (!this.state.hidden) {
 			this.setState({
@@ -293,19 +266,11 @@ class Gif extends React.Component {
 			});
 		}
 	};
-
 	handleClose = () => {
 		this.setState({
 			open: false,
 		});
 	};
-
-	setStateAsync(state) {
-		return new Promise((resolve) => {
-			this.setState(state, resolve)
-		});
-	}
-
 	showFrame = (num) => {
 		const {context, gif, maxFrame, textData, gifInfo: {width, height}, fontSize} = this.state;
 		let thisFrame = textData.filter(item => {
@@ -332,7 +297,6 @@ class Gif extends React.Component {
 		context.strokeText(thisFrame[0].text, startPx, height, width);
 		context.fillText(thisFrame[0].text, startPx, height, width)
 	};
-
 	moveToFrame = (num) => {
 		try {
 			this.showFrame(num)
@@ -344,7 +308,6 @@ class Gif extends React.Component {
 			currentFrame: num
 		})
 	};
-
 	changeFrame = () => {
 		const {gif, currentFrame, maxFrame} = this.state;
 
@@ -371,7 +334,6 @@ class Gif extends React.Component {
 			currentFrame: 0
 		})
 	};
-
 	handleDelayChange = (event) => {
 		this.setState({
 			delay: event.target.value,
@@ -379,14 +341,12 @@ class Gif extends React.Component {
 		});
 		clearInterval(this.state.intervalId);
 	};
-
 	handleFontSizeChange = (event) => {
 		this.setState({
 			fontSize: event.target.value,
 			play: false,
 		});
 	};
-
 	parseImage = (imageDataList) => {
 		let canvas = document.getElementById("canvas");
 		let context = canvas.getContext("2d");
@@ -435,7 +395,6 @@ class Gif extends React.Component {
 			});
 		})
 	};
-
 	parseGif = () => {
 		const {file} = this.state;
 		let fr = new FileReader();
@@ -455,7 +414,6 @@ class Gif extends React.Component {
 		}
 
 	};
-
 	handleFileChange = (event) => {
 		const file = event.target.files[0];
 		if (file) {
@@ -468,24 +426,20 @@ class Gif extends React.Component {
 			})
 		}
 	};
-
 	handleStop = () => {
 		clearInterval(this.state.intervalId);
 		this.setState({play: false});
 	};
-
 	handlePlay = () => {
 		let intervalId = setInterval(this.changeFrame, this.state.delay);
 		this.setState({intervalId: intervalId, play: true});
 	};
-
 	onSliderChange = (e, value) => {
 		const {maxFrame, gif} = this.state;
 		if (maxFrame && gif && value < maxFrame) {
 			this.moveToFrame(value)
 		}
 	};
-
 	handleStartChange = (event, index) => {
 		const start = parseInt(event.target.value);
 		const {textData} = this.state;
@@ -502,7 +456,6 @@ class Gif extends React.Component {
 			start
 		})
 	};
-
 	handleEndChange = (event, index) => {
 		// fuck js
 		// why event.target.value is string
@@ -520,7 +473,6 @@ class Gif extends React.Component {
 			end
 		})
 	};
-
 	handleTextChange = (event, index) => {
 		const text = event.target.value;
 		const {textData} = this.state;
@@ -533,7 +485,6 @@ class Gif extends React.Component {
 
 		})
 	};
-
 	removeText = () => {
 		this.handleStop();
 		const {textData} = this.state;
@@ -542,7 +493,6 @@ class Gif extends React.Component {
 			textData,
 		})
 	};
-
 	addText = () => {
 		this.handleStop();
 		const {currentFrame, textData} = this.state;
@@ -564,7 +514,6 @@ class Gif extends React.Component {
 			textData: newTextData,
 		})
 	};
-
 	saveToGif = () => {
 		const {gifInfo: {width, height}, maxFrame, delay, file: {name}, imgFile} = this.state;
 		let canvas = document.createElement('canvas');
@@ -573,14 +522,7 @@ class Gif extends React.Component {
 		let context = canvas.getContext("2d");
 		const {gif, textData, fontSize} = this.state;
 
-		// gif.js canvas 2 gif
-		let gifMaker = new window.GIF({
-			workers: 2,
-			quality: 10,
-			width,
-			height,
-		});
-
+		let all_frames = [];
 		for (let currentFrame = 0; currentFrame < maxFrame; currentFrame++) {
 			let thisFrame = textData.filter(item => {
 				let [a, z] = item.timeDuration;
@@ -599,23 +541,17 @@ class Gif extends React.Component {
 				context.strokeText(thisFrame[0].text, startPx, height, width);
 				context.fillText(thisFrame[0].text, startPx, height, width)
 			}
-			gifMaker.addFrame(context, {delay: delay, copy: true});
-
+			all_frames.push(Array.from(context.getImageData(0, 0, width, height).data));
 		}
 
-		let react = this;
+		console.log(all_frames);
 
-		gifMaker.on('progress', function (a) {
-			if (a >= 1) {
-				react.setState({showProcess: false})
-			}
-		});
-		gifMaker.on('finished', function (blob) {
-			downloadFile(URL.createObjectURL(blob), name);
-		});
-		react.setState({showProcess: true}, () => {
-			gifMaker.render();
-		});
+		let all_pixels = [].concat(...all_frames);
+		console.log(all_pixels);
+
+		let r = this.props.wasm.encode_gif(width, height, all_pixels);
+
+		downloadBlob(r, 'ttttt.gif', 'application/octet-stream');
 
 		// 本地图片上传再创建本地记录
 		// 网络图片直接创建本地记录
@@ -625,7 +561,6 @@ class Gif extends React.Component {
 			this.createLocalGifxRecord();
 		}
 	};
-
 	// 保存gifx到本地
 	createLocalGifxRecord = () => {
 		const {db, gifx, textData} = this.state;
@@ -640,29 +575,24 @@ class Gif extends React.Component {
 		});
 		db.commit();
 	};
-
 	toggleDrawer = (open) => {
 		this.setState({
 			drawerOpen: open
 		})
 	};
-
 	handlePreview = () => {
 		this.handleStop();
 		this.showFirstFrame();
 		this.handlePlay();
 	};
-
 	handlePreFrame = () => {
 		const {currentFrame} = this.state;
 		this.moveToFrame(currentFrame - 1)
 	};
-
 	handleNextFrame = () => {
 		const {currentFrame} = this.state;
 		this.moveToFrame(currentFrame + 1)
 	};
-
 	shouldShowCircularProgress = () => {
 		const {file, isFileParseDone} = this.state;
 		if (file) {
@@ -671,14 +601,6 @@ class Gif extends React.Component {
 			return false
 		}
 	};
-
-	componentWillUnmount() {
-		if (this.state.intervalId) {
-			clearInterval(this.state.intervalId);
-		}
-	}
-
-
 	getTmp = (image_url, caption_template) => {
 		this.setState({
 			textTemplate: caption_template,
@@ -692,6 +614,64 @@ class Gif extends React.Component {
 			this.handleImportTextData()
 		})
 	};
+
+	constructor(props) {
+		super(props);
+		console.log(props);
+
+		// init db
+		let db = new localStorageDB("altair", localStorage);
+
+		if (db.isNew()) {
+			db.createTable("gifx", ["image_url", "caption_template", "create_time"]);
+		}
+		try {
+			db.queryAll("gifx", {sort: [["ID", "DESC"]]});
+		} catch (e) {
+			console.log(e);
+			db.createTable("gifx", ["image_url", "caption_template", "create_time"]);
+		}
+
+		this.state = {
+			fontSize: 20,
+			db,
+			dialogOpen: false,
+			currentFrame: 0,
+			play: true,
+			context: null,
+			data: [],
+			delay: 80,
+			isFileParseDone: false,
+			textData: [],
+			drawerOpen: false,
+			open: false,
+			hidden: false,
+			gif: false,
+			textTemplate: '',
+			webImageUrl: '',
+			uploadImageUrl: '',
+			dialogImportWebImageOpen: false,
+			showProcess: false,
+			imgFile: undefined,
+			uploadTemplateDone: false,
+			gifx: {
+				image_url: '',
+				caption_template: '',
+			}
+		}
+	}
+
+	setStateAsync(state) {
+		return new Promise((resolve) => {
+			this.setState(state, resolve)
+		});
+	}
+
+	componentWillUnmount() {
+		if (this.state.intervalId) {
+			clearInterval(this.state.intervalId);
+		}
+	}
 
 	componentDidMount() {
 		let sp = new URLSearchParams(this.props.location.search);
@@ -723,6 +703,7 @@ class Gif extends React.Component {
 	}
 
 	render() {
+		this.props.wasm.greet('你好呀');
 		const {classes} = this.props;
 		const {
 			hidden, open, file, dialogOpen, textTemplate, currentFrame, maxFrame, gif, play,
