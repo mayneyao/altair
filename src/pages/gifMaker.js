@@ -523,6 +523,8 @@ class Gif extends React.Component {
 		const {gif, textData, fontSize} = this.state;
 
 		let all_frames = [];
+
+		let begin = (new Date()).getTime();
 		for (let currentFrame = 0; currentFrame < maxFrame; currentFrame++) {
 			let thisFrame = textData.filter(item => {
 				let [a, z] = item.timeDuration;
@@ -543,14 +545,14 @@ class Gif extends React.Component {
 			}
 			all_frames.push(Array.from(context.getImageData(0, 0, width, height).data));
 		}
-
-		console.log(all_frames);
-
+		let p1 = (new Date()).getTime();
+		console.log("P1:JS拼接ImageData", p1 - begin);
 		let all_pixels = [].concat(...all_frames);
-		console.log(all_pixels);
-
+		let p2 = (new Date()).getTime();
+		console.log("P2:JS处理像素", p2 - p1);
 		let r = this.props.wasm.encode_gif(width, height, all_pixels);
-
+		let end = (new Date()).getTime();
+		console.log("P3:wasm合成gif", end - p2);
 		downloadBlob(r, 'ttttt.gif', 'application/octet-stream');
 
 		// 本地图片上传再创建本地记录
@@ -676,7 +678,6 @@ class Gif extends React.Component {
 	componentDidMount() {
 		console.log(this.props.location);
 
-		let sp = {};
 		// let sp = new URLSearchParams(this.props.location.search);
 		// let tmpId = sp.get('tmpId');
 		// let tmpFrom = sp.get('from');
