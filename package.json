@@ -13,8 +13,6 @@
     "fastgif": "^0.1.1",
     "jsgif": "^1.0.2",
     "localstoragedb": "^2.3.2",
-    "material-ui": "^1.0.0-beta.40",
-    "material-ui-icons": "^1.0.0-beta.36",
     "paralleljs": "^0.2.1",
     "pixel-gif": "^0.0.1",
     "rc-slider": "^8.6.1",
