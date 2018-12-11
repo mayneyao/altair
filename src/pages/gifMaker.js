@@ -5,6 +5,7 @@ import Card from '@material-ui/core/Card';
 import TextField from '@material-ui/core/TextField';
 import {Decoder} from '../fastgif/fastgif';
 
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import Slider from '@material-ui/lab/Slider';
 import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
@@ -38,7 +39,6 @@ import axios from 'axios';
 import localStorageDB from 'localstoragedb';
 import {SketchPicker} from 'react-color';
 
-
 const downloadFile = (outputUrl, name) => {
 	let a = document.createElement("a");
 	document.body.appendChild(a);
@@ -49,6 +49,13 @@ const downloadFile = (outputUrl, name) => {
 };
 
 const styles = theme => ({
+	label: {
+		color: 'rgba(0, 0, 0, 0.54)',
+		padding: '10px',
+		fontSize: '0.8rem',
+		fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+		lineHeight: 1,
+	},
 	swatch: {
 		padding: '5px',
 		borderRadius: '1px',
@@ -85,6 +92,12 @@ const styles = theme => ({
 		marginLeft: theme.spacing.unit,
 		marginRight: theme.spacing.unit,
 		width: 200,
+	},
+	fontColorTextField: {
+		marginLeft: theme.spacing.unit,
+		marginRight: theme.spacing.unit,
+		width: 180,
+		display: 'inline-block'
 	},
 	card: {},
 	media: {
@@ -130,11 +143,18 @@ const styles = theme => ({
 	text: {
 		marginLeft: theme.spacing.unit,
 		marginRight: theme.spacing.unit,
+	},
+	formControl: {
+		margin: theme.spacing.unit,
 	}
 });
 
 
 class Gif extends React.Component {
+
+	handleInputChange = (e) => {
+
+	};
 	handleUrlChange = (e) => {
 		this.setState({
 			webImageUrl: e.target.value,
@@ -168,7 +188,7 @@ class Gif extends React.Component {
 	init = () => {
 		this.setState({
 			displayColorPicker: false,
-			fontColor: '#fff',
+			fontColor: '#000',
 			fontSize: 20,
 			dialogImportWebImageOpen: false,
 			textTemplate: '',
@@ -255,7 +275,7 @@ class Gif extends React.Component {
 			});
 		}
 	};
-	handleClose = () => {
+	handleSpeedDialClose = () => {
 		this.setState({
 			open: false,
 		});
@@ -645,7 +665,7 @@ class Gif extends React.Component {
 
 		this.state = {
 			fontSize: 20,
-			fontColor: '#fff',
+			fontColor: '#000',
 			db,
 			dialogOpen: false,
 			currentFrame: 0,
@@ -739,7 +759,7 @@ class Gif extends React.Component {
 		return (
 			<div>
 				<Grid container>
-					<Grid item xs={12} sm={12} md/>
+					<Grid item xs={12} sm={12} md={3}/>
 					<Grid item xs={12} sm={12} md={6}>
 						<div className={classes.root}>
 							{
@@ -811,46 +831,6 @@ class Gif extends React.Component {
 							}
 
 						</Card>
-						<div>
-							<TextField
-								id="frame"
-								label="当前帧"
-								className={classes.textField}
-								value={this.state.currentFrame}
-								type="number"
-								margin="normal"
-								disabled={true}
-							/>
-							<TextField
-								id="delay"
-								label="延迟(ms)"
-								className={classes.textField}
-								value={this.state.delay}
-								onChange={this.handleDelayChange}
-								type="number"
-								margin="normal"
-							/>
-							<TextField
-								id="fontSize"
-								label="字体大小(px)"
-								className={classes.textField}
-								value={fontSize}
-								onChange={this.handleFontSizeChange}
-								type="number"
-								margin="normal"
-							/>
-							<div style={{background: fontColor, width: '20px', height: '20px'}}
-							     onClick={this.handleClick}>
-							</div>
-							{
-								displayColorPicker && <SketchPicker
-									color={this.state.fontColor}
-									onClick={this.handleClose}
-									onChangeComplete={this.handleChangeComplete}
-								/>
-							}
-
-						</div>
 						<div style={{padding: 20}}>
 							{
 								textData.map((data, index) => {
@@ -926,7 +906,55 @@ class Gif extends React.Component {
 							}
 
 						</div>
+					</Grid>
+					<Grid item xs={12} sm={12} md={3}>
+						<div style={{padding: ' 0 2em'}}>
+							<TextField
+								id="frame"
+								label="当前帧"
+								className={classes.textField}
+								value={this.state.currentFrame}
+								type="number"
+								margin="normal"
+								disabled={true}
+							/>
+							<TextField
+								id="delay"
+								label="延迟(ms)"
+								className={classes.textField}
+								value={this.state.delay}
+								onChange={this.handleDelayChange}
+								type="number"
+								margin="normal"
+							/>
+							<TextField
+								id="fontSize"
+								label="字体大小(px)"
+								className={classes.textField}
+								value={fontSize}
+								onChange={this.handleFontSizeChange}
+								type="number"
+								margin="normal"
+							/>
+							<div style={{width: 200}}>
+								<label htmlFor="color-picker" className={classes.label}>字体颜色</label>
+								<div id="color-picker">
+									<ClickAwayListener onClickAway={this.handleClose}>
+									<div style={{background: fontColor, width: '200px', height: '20px',marginLeft:'10px'}}
+									     onClick={this.handleClick}>
+									</div>
+									{
+										displayColorPicker && <SketchPicker
+											color={this.state.fontColor}
+											onClick={this.handleClose}
+											onChangeComplete={this.handleChangeComplete}
+										/>
+									}
+									</ClickAwayListener>
+								</div>
 
+							</div>
+						</div>
 					</Grid>
 					<Grid item xs={12} sm={12} md/>
 					<SpeedDial
@@ -935,7 +963,7 @@ class Gif extends React.Component {
 						hidden={hidden}
 						icon={<SpeedDialIcon/>}
 						// onBlur={this.handleClose}
-						onClick={open ? this.handleClose : this.handleOpen}
+						onClick={open ? this.handleSpeedDialClose : this.handleOpen}
 						// onClose={this.handleClose}
 						// onFocus={isTouch ? undefined : this.handleOpen}
 						// onMouseEnter={isTouch ? undefined : this.handleOpen}
