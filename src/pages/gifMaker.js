@@ -10,7 +10,7 @@ import Slider from '@material-ui/lab/Slider';
 import Drawer from '@material-ui/core/Drawer';
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
-import DownLoadIcon from '@material-ui/icons/FileDownload';
+import DownLoadIcon from '@material-ui/icons/CloudDownload';
 import PreIcon from '@material-ui/icons/SkipPrevious';
 import NextIcon from '@material-ui/icons/SkipNext';
 import VisibilityIcon from '@material-ui/icons/Visibility';
